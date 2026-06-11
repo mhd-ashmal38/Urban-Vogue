@@ -1,5 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
+import { IsString, IsOptional } from 'class-validator';
 
 /**
  * UpdateUserDto - Defines the structure for updating a user
@@ -8,6 +9,7 @@ import { CreateUserDto } from './create-user.dto';
  * - Extends CreateUserDto using PartialType
  * - Makes all fields optional (user can update any subset of fields)
  * - Reuses the same validation rules from CreateUserDto
+ * - Adds resetToken and resetTokenExpiry for password reset
  *
  * PartialType explanation:
  * - Without PartialType, all fields from CreateUserDto would be required
@@ -19,4 +21,11 @@ import { CreateUserDto } from './create-user.dto';
  * - Update only email: { email: "new@email.com" }
  * - Update both: { name: "John", email: "new@email.com" }
  */
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+export class UpdateUserDto extends PartialType(CreateUserDto) {
+  @IsString()
+  @IsOptional()
+  resetToken?: string;
+
+  @IsOptional()
+  resetTokenExpiry?: Date | string | null;
+}

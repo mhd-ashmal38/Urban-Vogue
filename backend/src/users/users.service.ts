@@ -91,6 +91,20 @@ export class UsersService {
   }
 
   /**
+   * Find a user by reset token (for password reset)
+   * @param resetToken - The password reset token
+   * @returns The user (including password for auth verification)
+   * @returns null if user not found
+   */
+  async findByResetToken(resetToken: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { resetToken },
+    });
+
+    return user;
+  }
+
+  /**
    * Update a user
    * @param id - User's UUID
    * @param updateUserDto - Fields to update

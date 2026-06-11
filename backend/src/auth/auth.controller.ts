@@ -11,6 +11,8 @@ import {
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthRequest } from '../common/types';
 
@@ -127,5 +129,58 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   getProfile(@Request() req: AuthRequest) {
     return req.user;
+  }
+
+  /**
+   * POST /auth/forgot-password
+   * Request password reset
+   * @param forgotPasswordDto - User's email
+   * @returns Success message with reset token (for testing)
+   *
+   * HTTP Status: 200 OK
+   *
+   * Example request body:
+   * {
+   *   "email": "user@example.com"
+   * }
+   *
+   * Example response:
+   * {
+   *   "message": "Password reset token generated",
+   *   "resetToken": "abc123..."
+   * }
+   *
+   * Note: In production, the resetToken would be sent via email
+   * and not returned in the response
+   */
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(forgotPasswordDto);
+  }
+
+  /**
+   * POST /auth/reset-password
+   * Reset password with token
+   * @param resetPasswordDto - Reset token and new password
+   * @returns Success message
+   *
+   * HTTP Status: 200 OK or 401 Unauthorized
+   *
+   * Example request body:
+   * {
+   *   "token": "abc123...",
+   *   "password": "NewPassword123"
+   * }
+   *
+   * Example response:
+   * {
+   *   "message": "Password reset successfully"
+   * }
+   */
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.authService.resetPassword(resetPasswordDto);
   }
 }
