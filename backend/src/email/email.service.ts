@@ -29,7 +29,7 @@ export class EmailService {
     resetToken: string,
     resetLink?: string,
   ) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const link =
       resetLink || `${frontendUrl}/reset-password?token=${resetToken}`;
 
