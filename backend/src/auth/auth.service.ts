@@ -135,7 +135,12 @@ export class AuthService {
    * @returns The user without password
    */
   async validateUser(payload: any) {
-    const user = await this.usersService.findOne(payload.sub);
-    return user;
+    try {
+      const user = await this.usersService.findOne(payload.sub);
+      return user;
+    } catch (error) {
+      console.error('Error validating user:', error);
+      return null;
+    }
   }
 }
