@@ -111,6 +111,11 @@ export default function Login() {
             {fieldErrors.password && (
               <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
             )}
+            <div className="text-right mt-1">
+              <Link to="/forgot-password" className="text-sm text-blue-500 hover:underline">
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {/* Submit Button */}
