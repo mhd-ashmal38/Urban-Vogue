@@ -6,6 +6,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Enable CORS for frontend
+  app.enableCors({
+    origin: 'http://localhost:5173', // Frontend URL
+    credentials: true,
+  });
+
   // Swagger Configuration
   const config = new DocumentBuilder()
     .setTitle('Urban Vogue API')
