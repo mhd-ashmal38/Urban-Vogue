@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 
@@ -34,6 +35,7 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -150,17 +152,17 @@ export class AuthService {
   /**
    * Request password reset
    * @param forgotPasswordDto - Email of user requesting reset
-   * @returns Success message with reset token (for testing)
+   * @returns Success message
    *
    * Process:
    * 1. Find user by email
    * 2. Generate random reset token
    * 3. Set expiry to 1 hour from now
    * 4. Save token to user record
-   * 5. In production, send email with reset link
+   * 5. Send email with reset link
    *
-   * Note: In production, you would send an email with a link like:
-   * https://yourapp.com/reset-password?token=abc123
+   * Note: The reset token is sent via email, not returned in response
+   * for security. User must check their email to get the reset link.
    */
   async forgotPassword(forgotPasswordDto: ForgotPasswordDto) {
     const user = await this.usersService.findByEmail(forgotPasswordDto.email);
@@ -186,11 +188,12 @@ export class AuthService {
       resetTokenExpiry,
     });
 
-    // In production, send email here
-    // For now, return the token for testing
+    // Send email with reset link
+    await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+
     return {
-      message: 'Password reset token generated',
-      resetToken, // Remove this in production
+      message:
+        'If an account with this email exists, a reset link has been sent.',
     };
   }
 
