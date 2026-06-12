@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { P, Small } from '../components/ui/typography'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 export default function Login() {
@@ -83,7 +84,7 @@ export default function Login() {
                 placeholder="Enter your email"
               />
               {fieldErrors.email && (
-                <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+                <Small className="text-red-500 mt-1">{fieldErrors.email}</Small>
               )}
             </div>
 
@@ -98,7 +99,7 @@ export default function Login() {
                 placeholder="Enter your password"
               />
               {fieldErrors.password && (
-                <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
+                <Small className="text-red-500 mt-1">{fieldErrors.password}</Small>
               )}
               <div className="text-right mt-1">
                 <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
@@ -118,12 +119,12 @@ export default function Login() {
           </div>
 
           {/* Register Link */}
-          <p className="text-center mt-6 text-gray-600">
+          <P className="text-center mt-6 text-gray-600">
             Don't have an account?{' '}
             <Link to="/register" className="text-blue-600 hover:text-blue-800 font-semibold">
               Register
             </Link>
-          </p>
+          </P>
         </CardContent>
       </Card>
     </div>

@@ -10,6 +10,7 @@ import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { P, Small } from '../components/ui/typography'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 // Zod schema for register validation
@@ -86,7 +87,7 @@ export default function Register() {
                 placeholder="Enter your name"
               />
               {errors.name && (
-                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                <Small className="text-red-500 mt-1">{errors.name.message}</Small>
               )}
             </div>
 
@@ -100,7 +101,7 @@ export default function Register() {
                 placeholder="Enter your email"
               />
               {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                <Small className="text-red-500 mt-1">{errors.email.message}</Small>
               )}
             </div>
 
@@ -114,13 +115,13 @@ export default function Register() {
                 placeholder="Enter your password"
               />
               {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
+                <Small className="text-red-500 mt-1">
                   {errors.password.message}
-                </p>
+                </Small>
               )}
-              <p className="text-xs text-gray-500 mt-1">
+              <Small className="text-xs text-gray-500 mt-1">
                 Must contain uppercase, lowercase, and number
-              </p>
+              </Small>
             </div>
 
             {/* Submit Button */}
@@ -134,12 +135,12 @@ export default function Register() {
           </form>
 
           {/* Login Link */}
-          <p className="text-center mt-6 text-gray-600">
+          <P className="text-center mt-6 text-gray-600">
             Already have an account?{' '}
             <Link to="/login" className="text-blue-600 hover:text-blue-800 font-semibold">
               Login
             </Link>
-          </p>
+          </P>
         </CardContent>
       </Card>
     </div>

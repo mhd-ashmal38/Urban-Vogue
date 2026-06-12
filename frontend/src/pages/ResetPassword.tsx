@@ -6,6 +6,7 @@ import { authApi } from '../services/auth'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { P, Small } from '../components/ui/typography'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 export default function ResetPassword() {
@@ -75,7 +76,7 @@ export default function ResetPassword() {
       <div className="h-full w-full flex items-center justify-center p-4">
         <Card className="max-w-md w-[90%] max-h-[90vh] shadow-xl text-center">
           <CardContent className="py-8">
-            <p className="text-gray-600">Invalid or missing reset token.</p>
+            <P className="text-gray-600">Invalid or missing reset token.</P>
             <Link to="/forgot-password" className="text-blue-600 hover:text-blue-800 font-semibold mt-4 inline-block">
               Request a new password reset
             </Link>
@@ -109,7 +110,7 @@ export default function ResetPassword() {
                 disabled={!token}
               />
               {fieldErrors.password && (
-                <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
+                <Small className="text-red-500 mt-1">{fieldErrors.password}</Small>
               )}
             </div>
 
@@ -125,7 +126,7 @@ export default function ResetPassword() {
                 disabled={!token}
               />
               {fieldErrors.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">{fieldErrors.confirmPassword}</p>
+                <Small className="text-red-500 mt-1">{fieldErrors.confirmPassword}</Small>
               )}
             </div>
 
@@ -140,11 +141,11 @@ export default function ResetPassword() {
           </div>
 
           {/* Back to Login */}
-          <div className="text-center mt-6">
+          <P className="text-center mt-6">
             <Link to="/login" className="text-blue-600 hover:text-blue-800 font-semibold">
               Back to Login
             </Link>
-          </div>
+          </P>
         </CardContent>
       </Card>
     </div>

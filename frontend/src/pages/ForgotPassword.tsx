@@ -6,6 +6,7 @@ import { authApi } from '../services/auth'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { P, Small } from '../components/ui/typography'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 export default function ForgotPassword() {
@@ -73,7 +74,7 @@ export default function ForgotPassword() {
                 placeholder="Enter your email"
               />
               {fieldErrors.email && (
-                <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+                <Small className="text-red-500 mt-1">{fieldErrors.email}</Small>
               )}
             </div>
 
@@ -88,11 +89,11 @@ export default function ForgotPassword() {
           </div>
 
           {/* Back to Login */}
-          <div className="text-center mt-6">
+          <P className="text-center mt-6">
             <Link to="/login" className="text-blue-600 hover:text-blue-800 font-semibold">
               Back to Login
             </Link>
-          </div>
+          </P>
         </CardContent>
       </Card>
     </div>
