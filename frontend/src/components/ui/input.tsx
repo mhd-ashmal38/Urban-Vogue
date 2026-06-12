@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Search } from "lucide-react"
+import { Search, Lock, LockOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -34,6 +34,7 @@ function Input({
 }: React.ComponentProps<"input"> &
   VariantProps<typeof inputVariants> & { icon?: React.ReactNode }) {
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const [showPassword, setShowPassword] = React.useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (props.onChange) {
@@ -63,16 +64,27 @@ function Input({
   }
 
   if (icon) {
+    const isPassword = type === "password"
+    const inputType = isPassword && showPassword ? "text" : type
+
     return (
       <div className="relative w-full h-10 flex items-center bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10">
-          {icon}
-        </span>
         <input
-          type={type}
-          className={cn("w-full h-full bg-transparent border-none outline-none pl-10 pr-3 text-gray-900 placeholder:text-gray-400", className)}
+          type={inputType}
+          className={cn("w-full h-full bg-transparent border-none outline-none pl-3 pr-10 text-gray-900 placeholder:text-gray-400", className)}
           {...props}
         />
+        <button
+          type="button"
+          onClick={() => isPassword && setShowPassword(!showPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 z-10 hover:text-gray-600 cursor-pointer"
+        >
+          {isPassword ? (
+            showPassword ? <LockOpen className="w-5 h-5" /> : <Lock className="w-5 h-5" />
+          ) : (
+            icon
+          )}
+        </button>
       </div>
     )
   }
