@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
-import { Lock, AlertCircle, CheckCircle } from 'lucide-react'
+import { Lock } from 'lucide-react'
+import { toast } from 'sonner'
 import { authApi } from '../services/auth'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -13,8 +14,6 @@ export default function ResetPassword() {
 
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [error, setError] = useState<string | null>(token ? null : 'Invalid or missing reset token. Please request a new password reset.')
-  const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<{ password?: string; confirmPassword?: string }>({})
 
@@ -42,7 +41,7 @@ export default function ResetPassword() {
     e.stopPropagation()
 
     if (!token) {
-      setError('Invalid or missing reset token. Please request a new password reset.')
+      toast.error('Invalid or missing reset token. Please request a new password reset.')
       return
     }
 
@@ -52,13 +51,11 @@ export default function ResetPassword() {
 
     console.log('Reset password request')
     setIsLoading(true)
-    setError(null)
-    setSuccess(false)
 
     try {
       await authApi.resetPassword({ token, password })
       console.log('Password reset successful')
-      setSuccess(true)
+      toast.success('Password reset successful! Redirecting to login...')
       // Redirect to login after 2 seconds
       setTimeout(() => {
         navigate('/login')
@@ -66,21 +63,21 @@ export default function ResetPassword() {
     } catch (err: unknown) {
       console.error('Reset password error:', err)
       const error = err as { response?: { data?: { message?: string } } }
-      setError(
-        error.response?.data?.message || 'Failed to reset password. Please try again.'
-      )
+      toast.error(error.response?.data?.message || 'Failed to reset password. Please try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
-  if (!token && !error) {
+  if (!token) {
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <Card className="max-w-md w-[90%] max-h-[90vh] shadow-xl text-center">
           <CardContent className="py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
+            <p className="text-gray-600">Invalid or missing reset token.</p>
+            <Link to="/forgot-password" className="text-blue-600 hover:text-blue-800 font-semibold mt-4 inline-block">
+              Request a new password reset
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -97,19 +94,6 @@ export default function ResetPassword() {
           </CardDescription>
         </CardHeader>
         <CardContent className="overflow-y-auto flex-1 w-full py-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2" />
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              Password reset successful! Redirecting to login...
-            </div>
-          )}
 
           <div className="space-y-5 w-full">
             {/* Password Field */}
@@ -123,7 +107,7 @@ export default function ResetPassword() {
                 onChange={(e) => setPassword(e.target.value)}
                 icon={<Lock className="w-5 h-5 text-gray-400" />}
                 placeholder="Enter new password"
-                disabled={success || !token}
+                disabled={!token}
               />
               {fieldErrors.password && (
                 <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
@@ -141,7 +125,7 @@ export default function ResetPassword() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 icon={<Lock className="w-5 h-5 text-gray-400" />}
                 placeholder="Confirm new password"
-                disabled={success || !token}
+                disabled={!token}
               />
               {fieldErrors.confirmPassword && (
                 <p className="text-red-500 text-sm mt-1">{fieldErrors.confirmPassword}</p>
@@ -151,10 +135,10 @@ export default function ResetPassword() {
             {/* Submit Button */}
             <Button
               onClick={onSubmit}
-              disabled={isLoading || success || !token}
+              disabled={isLoading || !token}
               className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all duration-300"
             >
-              {isLoading ? 'Resetting...' : success ? 'Success' : 'Reset Password'}
+              {isLoading ? 'Resetting...' : 'Reset Password'}
             </Button>
           </div>
 

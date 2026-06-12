@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail, AlertCircle, CheckCircle } from 'lucide-react'
+import { Mail } from 'lucide-react'
+import { toast } from 'sonner'
 import { authApi } from '../services/auth'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -8,8 +9,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<{ email?: string }>({})
 
@@ -36,19 +35,15 @@ export default function ForgotPassword() {
 
     console.log('Forgot password request for:', email)
     setIsLoading(true)
-    setError(null)
-    setSuccess(false)
 
     try {
       await authApi.forgotPassword({ email })
       console.log('Forgot password email sent')
-      setSuccess(true)
+      toast.success('Password reset email sent! Check your inbox.')
     } catch (err: unknown) {
       console.error('Forgot password error:', err)
       const error = err as { response?: { data?: { message?: string } } }
-      setError(
-        error.response?.data?.message || 'Failed to send reset email. Please try again.'
-      )
+      toast.error(error.response?.data?.message || 'Failed to send reset email. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -64,19 +59,6 @@ export default function ForgotPassword() {
           </CardDescription>
         </CardHeader>
         <CardContent className="overflow-y-auto flex-1 w-full py-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2" />
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 flex items-center">
-              <CheckCircle className="w-5 h-5 mr-2" />
-              Password reset email sent! Check your inbox.
-            </div>
-          )}
 
           <div className="space-y-5 w-full">
             {/* Email Field */}
@@ -90,7 +72,6 @@ export default function ForgotPassword() {
                 onChange={(e) => setEmail(e.target.value)}
                 icon={<Mail className="w-5 h-5 text-gray-400" />}
                 placeholder="Enter your email"
-                disabled={success}
               />
               {fieldErrors.email && (
                 <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
@@ -100,10 +81,10 @@ export default function ForgotPassword() {
             {/* Submit Button */}
             <Button
               onClick={onSubmit}
-              disabled={isLoading || success}
+              disabled={isLoading}
               className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all duration-300"
             >
-              {isLoading ? 'Sending...' : success ? 'Email Sent' : 'Send Reset Link'}
+              {isLoading ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </div>
 

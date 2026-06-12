@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -27,6 +28,11 @@ function App() {
             }
           />
         </Routes>
+        <Toaster 
+          position="top-right"
+          richColors
+          closeButton
+        />
       </div>
     </BrowserRouter>
   )

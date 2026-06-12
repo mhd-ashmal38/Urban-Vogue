@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Mail, Lock, AlertCircle } from 'lucide-react'
+import { Mail, Lock } from 'lucide-react'
+import { toast } from 'sonner'
 import { authApi } from '../services/auth'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
@@ -10,7 +11,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 export default function Login() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
-  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -45,19 +45,17 @@ export default function Login() {
 
     console.log('Login attempt with:', email)
     setIsLoading(true)
-    setError(null)
 
     try {
       const response = await authApi.login({ email, password })
       console.log('Login successful:', response)
       setAuth(response.user, response.token)
+      toast.success('Login successful!')
       navigate('/profile')
     } catch (err: unknown) {
       console.error('Login error:', err)
       const error = err as { response?: { data?: { message?: string } } }
-      setError(
-        error.response?.data?.message || 'Login failed. Please try again.'
-      )
+      toast.error(error.response?.data?.message || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -71,12 +69,6 @@ export default function Login() {
           <CardDescription className="text-center text-blue-100 mt-2">Sign in to your account</CardDescription>
         </CardHeader>
         <CardContent className="overflow-y-auto flex-1 w-full py-6">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
-              <AlertCircle className="w-5 h-5 mr-2" />
-              {error}
-            </div>
-          )}
 
           <div className="space-y-5 w-full">
             {/* Email Field */}
