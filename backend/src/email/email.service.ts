@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * EmailService - Handles email sending
@@ -33,16 +35,38 @@ export class EmailService {
     const link =
       resetLink || `${frontendUrl}/reset-password?token=${resetToken}`;
 
+    // Read HTML template from file
+    const templatePath = path.join(
+      process.cwd(),
+      'templates',
+      'password-reset.hbs',
+    );
+    let htmlContent = '';
+
+    try {
+      htmlContent = fs.readFileSync(templatePath, 'utf-8');
+    } catch (error) {
+      console.error('Error reading email template:', error);
+      // Fallback to simple HTML if template file not found
+      htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1>Password Reset Request</h1>
+          <p>Click the link below to reset your password:</p>
+          <a href="${link}">Reset Password</a>
+          <p>This link will expire in 1 hour.</p>
+        </div>
+      `;
+    }
+
+    // Replace placeholders with actual values
+    htmlContent = htmlContent.replace(/\{\{resetLink\}\}/g, link);
+    htmlContent = htmlContent.replace(/\{\{resetToken\}\}/g, resetToken);
+    htmlContent = htmlContent.replace(/\{\{email\}\}/g, email);
+
     await this.mailerService.sendMail({
       to: email,
       subject: 'Password Reset Request - Urban Vogue',
-      template: 'password-reset', // You can create HTML templates
-      context: {
-        resetLink: link,
-        resetToken,
-        email,
-      },
-      // For now, using plain text (upgrade to HTML template later)
+      html: htmlContent,
       text: `
         You requested a password reset for your Urban Vogue account.
 
