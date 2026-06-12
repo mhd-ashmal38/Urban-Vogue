@@ -6,6 +6,7 @@ import { authApi } from '../services/auth'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 export default function Login() {
@@ -73,9 +74,7 @@ export default function Login() {
           <div className="space-y-5 w-full">
             {/* Email Field */}
             <div className="w-full">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email
-              </label>
+              <Label>Email</Label>
               <Input
                 type="email"
                 value={email}
@@ -90,9 +89,7 @@ export default function Login() {
 
             {/* Password Field */}
             <div className="w-full">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
+              <Label>Password</Label>
               <Input
                 type="password"
                 value={password}

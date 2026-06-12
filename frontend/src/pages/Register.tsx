@@ -9,6 +9,7 @@ import { authApi } from '../services/auth'
 import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 // Zod schema for register validation
@@ -77,9 +78,7 @@ export default function Register() {
           <form onSubmit={handleFormSubmit} className="space-y-5">
             {/* Name Field */}
             <div className="w-full">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Name
-              </label>
+              <Label>Name</Label>
               <Input
                 type="text"
                 {...register('name')}
@@ -93,9 +92,7 @@ export default function Register() {
 
             {/* Email Field */}
             <div className="w-full">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email
-              </label>
+              <Label>Email</Label>
               <Input
                 type="email"
                 {...register('email')}
@@ -109,9 +106,7 @@ export default function Register() {
 
             {/* Password Field */}
             <div className="w-full">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Password
-              </label>
+              <Label>Password</Label>
               <Input
                 type="password"
                 {...register('password')}

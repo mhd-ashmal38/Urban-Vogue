@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { authApi } from '../services/auth'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
+import { Label } from '../components/ui/label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 export default function ResetPassword() {
@@ -98,9 +99,7 @@ export default function ResetPassword() {
           <div className="space-y-5 w-full">
             {/* Password Field */}
             <div className="w-full">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                New Password
-              </label>
+              <Label>New Password</Label>
               <Input
                 type="password"
                 value={password}
@@ -116,9 +115,7 @@ export default function ResetPassword() {
 
             {/* Confirm Password Field */}
             <div className="w-full">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Confirm Password
-              </label>
+              <Label>Confirm Password</Label>
               <Input
                 type="password"
                 value={confirmPassword}
