@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { Lock, AlertCircle, CheckCircle } from 'lucide-react'
 import { authApi } from '../services/auth'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -73,97 +76,96 @@ export default function ResetPassword() {
 
   if (!token && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
+      <div className="h-full w-full flex items-center justify-center p-4">
+        <Card className="max-w-md w-[90%] max-h-[90vh] shadow-xl text-center">
+          <CardContent className="py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </CardContent>
+        </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-2">Reset Password</h1>
-        <p className="text-gray-600 text-center mb-6">
-          Enter your new password below
-        </p>
+    <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100 p-4">
+      <Card className="max-w-md w-[90%] max-h-[90vh] shadow-xl">
+        <CardHeader className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-t-xl">
+          <CardTitle className="text-3xl font-bold text-center text-white">Reset Password</CardTitle>
+          <CardDescription className="text-center text-blue-100 mt-2">
+            Enter your new password below
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="overflow-y-auto flex-1 w-full py-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              {error}
+            </div>
+          )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            {error}
-          </div>
-        )}
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-4 flex items-center">
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Password reset successful! Redirecting to login...
+            </div>
+          )}
 
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 flex items-center">
-            <CheckCircle className="w-5 h-5 mr-2" />
-            Password reset successful! Redirecting to login...
-          </div>
-        )}
-
-        <div className="space-y-6">
-          {/* Password Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
+          <div className="space-y-5 w-full">
+            {/* Password Field */}
+            <div className="w-full">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                New Password
+              </label>
+              <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                icon={<Lock className="w-5 h-5 text-gray-400" />}
                 placeholder="Enter new password"
                 disabled={success || !token}
               />
+              {fieldErrors.password && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
+              )}
             </div>
-            {fieldErrors.password && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
-            )}
-          </div>
 
-          {/* Confirm Password Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
+            {/* Confirm Password Field */}
+            <div className="w-full">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Confirm Password
+              </label>
+              <Input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                icon={<Lock className="w-5 h-5 text-gray-400" />}
                 placeholder="Confirm new password"
                 disabled={success || !token}
               />
+              {fieldErrors.confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">{fieldErrors.confirmPassword}</p>
+              )}
             </div>
-            {fieldErrors.confirmPassword && (
-              <p className="text-red-500 text-sm mt-1">{fieldErrors.confirmPassword}</p>
-            )}
+
+            {/* Submit Button */}
+            <Button
+              onClick={onSubmit}
+              disabled={isLoading || success || !token}
+              className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all duration-300"
+            >
+              {isLoading ? 'Resetting...' : success ? 'Success' : 'Reset Password'}
+            </Button>
           </div>
 
-          {/* Submit Button */}
-          <button
-            onClick={onSubmit}
-            disabled={isLoading || success || !token}
-            className="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? 'Resetting...' : success ? 'Success' : 'Reset Password'}
-          </button>
-        </div>
-
-        {/* Back to Login */}
-        <div className="text-center mt-6">
-          <Link to="/login" className="text-blue-500 hover:underline">
-            Back to Login
-          </Link>
-        </div>
-      </div>
+          {/* Back to Login */}
+          <div className="text-center mt-6">
+            <Link to="/login" className="text-blue-600 hover:text-blue-800 font-semibold">
+              Back to Login
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

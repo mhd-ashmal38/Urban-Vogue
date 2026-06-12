@@ -6,6 +6,9 @@ import { useNavigate, Link } from 'react-router-dom'
 import { User, Mail, Lock, AlertCircle } from 'lucide-react'
 import { authApi } from '../services/auth'
 import { useAuthStore } from '../store/authStore'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
 
 // Zod schema for register validation
 const registerSchema = z
@@ -66,105 +69,93 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-8">Register</h1>
+    <div className="h-full w-full flex items-center justify-center p-4">
+      <Card className="max-w-md w-[90%] max-h-[90vh] shadow-xl">
+        <CardHeader className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-t-xl">
+          <CardTitle className="text-3xl font-bold text-center text-white">Create Account</CardTitle>
+          <CardDescription className="text-center text-blue-100 mt-2">Join us today</CardDescription>
+        </CardHeader>
+        <CardContent className="overflow-y-auto flex-1 w-full py-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              {error}
+            </div>
+          )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4 flex items-center">
-            <AlertCircle className="w-5 h-5 mr-2" />
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleFormSubmit} className="space-y-6">
-          {/* Name Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Name
-            </label>
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
+          <form onSubmit={handleFormSubmit} className="space-y-5">
+            {/* Name Field */}
+            <div className="w-full">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Name
+              </label>
+              <Input
                 type="text"
                 {...register('name')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                icon={<User className="w-5 h-5 text-gray-400" />}
                 placeholder="Enter your name"
               />
+              {errors.name && (
+                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+              )}
             </div>
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-            )}
-          </div>
 
-          {/* Email Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
+            {/* Email Field */}
+            <div className="w-full">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Email
+              </label>
+              <Input
                 type="email"
                 {...register('email')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                icon={<Mail className="w-5 h-5 text-gray-400" />}
                 placeholder="Enter your email"
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+              )}
             </div>
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-            )}
-          </div>
 
-          {/* Password Field */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
+            {/* Password Field */}
+            <div className="w-full">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Password
+              </label>
+              <Input
                 type="password"
                 {...register('password')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                icon={<Lock className="w-5 h-5 text-gray-400" />}
                 placeholder="Enter your password"
               />
-            </div>
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.password.message}
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.password.message}
+                </p>
+              )}
+              <p className="text-xs text-gray-500 mt-1">
+                Must contain uppercase, lowercase, and number
               </p>
-            )}
-            <p className="text-xs text-gray-500 mt-1">
-              Must contain uppercase, lowercase, and number
-            </p>
-          </div>
+            </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-green-500 text-white py-2 rounded-lg hover:bg-green-600 disabled:bg-green-300 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2.5 rounded-lg shadow-md transition-all duration-300"
+            >
+              {isLoading ? 'Registering...' : 'Register'}
+            </Button>
+          </form>
 
-        {/* Login Link */}
-        <p className="text-center mt-6 text-gray-600">
-          Already have an account?{' '}
-          <Link to="/login" className="text-blue-500 hover:underline">
-            Login
-          </Link>
-        </p>
-
-        {/* Back to Home */}
-        <div className="text-center mt-4">
-          <Link to="/" className="text-gray-500 hover:text-gray-700 text-sm">
-            Back to Home
-          </Link>
-        </div>
-      </div>
+          {/* Login Link */}
+          <p className="text-center mt-6 text-gray-600">
+            Already have an account?{' '}
+            <Link to="/login" className="text-blue-600 hover:text-blue-800 font-semibold">
+              Login
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }
