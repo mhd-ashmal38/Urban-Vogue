@@ -35,9 +35,15 @@ export default function Profile() {
     fetchProfile()
   }, [token, navigate])
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
+  const handleLogout = async () => {
+    try {
+      await authApi.logout()
+    } catch {
+      // Even if the API call fails, clear local state
+    } finally {
+      logout()
+      navigate('/')
+    }
   }
 
   if (loading) {

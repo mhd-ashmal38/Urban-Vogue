@@ -51,7 +51,7 @@ export default function Login() {
     try {
       const response = await authApi.login({ email, password })
       console.log('Login successful:', response)
-      setAuth(response.user, response.token)
+      setAuth(response.user, response.accessToken, response.refreshToken)
       toast.success('Login successful!')
       navigate('/profile')
     } catch (err: unknown) {

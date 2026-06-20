@@ -15,8 +15,10 @@ interface User {
 interface AuthStore {
   user: User | null
   token: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
-  setAuth: (user: User, token: string) => void
+  setAuth: (user: User, accessToken: string, refreshToken: string) => void
+  setToken: (accessToken: string, refreshToken: string) => void
   logout: () => void
   setUser: (user: User) => void
 }
@@ -27,21 +29,31 @@ export const useAuthStore = create<AuthStore>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
 
-      // Set user and token after successful login/register
-      setAuth: (user, token) =>
+      // Set user and both tokens after successful login/register
+      setAuth: (user, accessToken, refreshToken) =>
         set({
           user,
-          token,
+          token: accessToken,
+          refreshToken,
           isAuthenticated: true,
         }),
 
-      // Clear user and token on logout
+      // Update tokens only (called after token refresh)
+      setToken: (accessToken, refreshToken) =>
+        set({
+          token: accessToken,
+          refreshToken,
+        }),
+
+      // Clear everything on logout
       logout: () =>
         set({
           user: null,
           token: null,
+          refreshToken: null,
           isAuthenticated: false,
         }),
 

@@ -38,7 +38,7 @@ import { EmailModule } from '../email/email.module';
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'super-secret-key',
       signOptions: {
-        expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any,
+        expiresIn: (process.env.JWT_EXPIRES_IN || '15m') as any,
       },
     }),
   ],

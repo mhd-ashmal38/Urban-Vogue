@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
@@ -69,12 +70,16 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    // Generate JWT token
-    const token = this.generateToken(user.id, user.email);
+    // Generate both tokens
+    const accessToken = this.generateAccessToken(user.id, user.email);
+    const { refreshToken, refreshTokenExpiry } =
+      await this.generateRefreshToken(user.id);
 
     return {
       user,
-      token,
+      accessToken,
+      refreshToken,
+      refreshTokenExpiry,
     };
   }
 
@@ -107,12 +112,16 @@ export class AuthService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = user;
 
-    // Generate JWT token
-    const token = this.generateToken(user.id, user.email);
+    // Generate both tokens
+    const accessToken = this.generateAccessToken(user.id, user.email);
+    const { refreshToken, refreshTokenExpiry } =
+      await this.generateRefreshToken(user.id);
 
     return {
       user: userWithoutPassword,
-      token,
+      accessToken,
+      refreshToken,
+      refreshTokenExpiry,
     };
   }
 
@@ -128,9 +137,68 @@ export class AuthService {
    * - iat: Issued at (automatically added)
    * - exp: Expiration time (automatically added based on JWT_EXPIRES_IN)
    */
-  private generateToken(userId: string, email: string): string {
+  private generateAccessToken(userId: string, email: string): string {
     const payload = { sub: userId, email };
     return this.jwtService.sign(payload);
+  }
+
+  private async generateRefreshToken(
+    userId: string,
+  ): Promise<{ refreshToken: string; refreshTokenExpiry: Date }> {
+    // Generate a random 64-byte hex string as refresh token
+    const refreshToken = randomBytes(64).toString('hex');
+
+    // Set expiry to 7 days from now
+    const refreshTokenExpiry = new Date();
+    refreshTokenExpiry.setDate(refreshTokenExpiry.getDate() + 7);
+
+    // Save the refresh token in the database
+    await this.usersService.update(userId, {
+      refreshToken,
+      refreshTokenExpiry,
+    });
+
+    return { refreshToken, refreshTokenExpiry };
+  }
+
+  async refreshTokens(refreshTokenDto: RefreshTokenDto) {
+    // Find user by refresh token
+    const user = await this.usersService.findByRefreshToken(
+      refreshTokenDto.refreshToken,
+    );
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    // Check if token is expired
+    if (user.refreshTokenExpiry && user.refreshTokenExpiry < new Date()) {
+      // Clear the expired token
+      await this.usersService.update(user.id, {
+        refreshToken: null,
+        refreshTokenExpiry: null,
+      });
+      throw new UnauthorizedException(
+        'Refresh token has expired, please log in again',
+      );
+    }
+
+    // Rotate: generate new access token + new refresh token (token rotation)
+    const accessToken = this.generateAccessToken(user.id, user.email);
+    const { refreshToken, refreshTokenExpiry } =
+      await this.generateRefreshToken(user.id);
+
+    return { accessToken, refreshToken, refreshTokenExpiry };
+  }
+
+  async logout(userId: string) {
+    // Invalidate the refresh token by clearing it from the database
+    await this.usersService.update(userId, {
+      refreshToken: null,
+      refreshTokenExpiry: null,
+    });
+
+    return { message: 'Logged out successfully' };
   }
 
   /**

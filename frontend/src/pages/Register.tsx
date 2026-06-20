@@ -51,7 +51,7 @@ export default function Register() {
 
     try {
       const response = await authApi.register(data)
-      setAuth(response.user, response.token)
+      setAuth(response.user, response.accessToken, response.refreshToken)
       toast.success('Registration successful!')
       navigate('/profile')
     } catch (err: unknown) {
