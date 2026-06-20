@@ -21,16 +21,26 @@ interface ResetPasswordDto {
   password: string
 }
 
+interface AuthUser {
+  id: string
+  name: string
+  email: string
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 interface AuthResponse {
-  user: {
-    id: string
-    name: string
-    email: string
-    isActive: boolean
-    createdAt: string
-    updatedAt: string
-  }
-  token: string
+  user: AuthUser
+  accessToken: string
+  refreshToken: string
+  refreshTokenExpiry: string
+}
+
+interface RefreshResponse {
+  accessToken: string
+  refreshToken: string
+  refreshTokenExpiry: string
 }
 
 interface MessageResponse {
@@ -52,15 +62,20 @@ export const authApi = {
   },
 
   // Get current user profile
-  getProfile: async (): Promise<{
-    id: string
-    name: string
-    email: string
-    isActive: boolean
-    createdAt: string
-    updatedAt: string
-  }> => {
-    const response = await api.get('/auth/profile')
+  getProfile: async (): Promise<AuthUser> => {
+    const response = await api.get<AuthUser>('/auth/profile')
+    return response.data
+  },
+
+  // Refresh access token using refresh token
+  refresh: async (refreshToken: string): Promise<RefreshResponse> => {
+    const response = await api.post<RefreshResponse>('/auth/refresh', { refreshToken })
+    return response.data
+  },
+
+  // Logout - invalidates refresh token in DB
+  logout: async (): Promise<MessageResponse> => {
+    const response = await api.post<MessageResponse>('/auth/logout')
     return response.data
   },
 

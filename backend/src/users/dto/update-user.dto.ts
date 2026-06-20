@@ -28,4 +28,11 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @IsOptional()
   resetTokenExpiry?: Date | string | null;
+
+  @IsString()
+  @IsOptional()
+  refreshToken?: string | null;
+
+  @IsOptional()
+  refreshTokenExpiry?: Date | null;
 }

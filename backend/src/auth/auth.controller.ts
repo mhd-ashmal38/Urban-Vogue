@@ -20,6 +20,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthRequest } from '../common/types';
 
@@ -209,5 +210,48 @@ export class AuthController {
   @ApiBody({ type: ResetPasswordDto })
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto);
+  }
+
+  /**
+   * POST /auth/refresh
+   * Issue a new access token using a valid refresh token
+   *
+   * Process:
+   * 1. Receive the refresh token from client
+   * 2. Validate it exists in DB and is not expired
+   * 3. Rotate: generate new access token + new refresh token
+   * 4. Return both new tokens
+   *
+   * Token Rotation: every time the refresh token is used, a new one
+   * is generated and the old one is invalidated. This means a stolen
+   * refresh token can only be used once before it becomes invalid.
+   */
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiResponse({ status: 200, description: 'Tokens refreshed successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  @ApiBody({ type: RefreshTokenDto })
+  refresh(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshTokens(refreshTokenDto);
+  }
+
+  /**
+   * POST /auth/logout
+   * Logout a user by invalidating their refresh token in the DB
+   *
+   * Process:
+   * 1. Verify the access token (JwtAuthGuard)
+   * 2. Clear the refresh token from DB
+   * 3. Client should also delete tokens from local storage
+   */
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Logout user' })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  logout(@Request() req: AuthRequest) {
+    return this.authService.logout(req.user.id);
   }
 }

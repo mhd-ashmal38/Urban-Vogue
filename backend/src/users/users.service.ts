@@ -104,6 +104,14 @@ export class UsersService {
     return user;
   }
 
+  async findByRefreshToken(refreshToken: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { refreshToken },
+    });
+
+    return user;
+  }
+
   /**
    * Update a user
    * @param id - User's UUID
