@@ -25,6 +25,7 @@ interface AuthUser {
   id: string
   name: string
   email: string
+  role: 'USER' | 'ADMIN'
   isActive: boolean
   createdAt: string
   updatedAt: string

@@ -22,6 +22,8 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { Roles } from './decorators/roles.decorator';
 import { AuthRequest } from '../common/types';
 
 /**
@@ -253,5 +255,31 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   logout(@Request() req: AuthRequest) {
     return this.authService.logout(req.user.id);
+  }
+
+  /**
+   * GET /auth/admin-only
+   * Example of an admin-only endpoint
+   *
+   * This endpoint demonstrates how to use RBAC:
+   * - JwtAuthGuard: Verifies the access token
+   * - RolesGuard: Checks if user has required role
+   * - Roles('ADMIN'): Only users with ADMIN role can access
+   *
+   * Usage example: Add this pattern to any endpoint that should be admin-only
+   */
+  @Get('admin-only')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Admin-only endpoint example' })
+  @ApiResponse({ status: 200, description: 'Access granted (admin only)' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden (not admin)' })
+  adminOnly(@Request() req: AuthRequest) {
+    return {
+      message: 'Welcome, admin!',
+      user: req.user,
+    };
   }
 }
