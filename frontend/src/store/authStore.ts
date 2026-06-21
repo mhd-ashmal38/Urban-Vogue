@@ -6,6 +6,7 @@ interface User {
   id: string
   name: string
   email: string
+  role: 'USER' | 'ADMIN'
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -21,12 +22,13 @@ interface AuthStore {
   setToken: (accessToken: string, refreshToken: string) => void
   logout: () => void
   setUser: (user: User) => void
+  hasRole: (role: 'USER' | 'ADMIN') => boolean
 }
 
 // Create the auth store with persistence
 export const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       refreshToken: null,
@@ -62,6 +64,12 @@ export const useAuthStore = create<AuthStore>()(
         set({
           user,
         }),
+
+      // Check if user has a specific role
+      hasRole: (role) => {
+        const user = get().user;
+        return user?.role === role;
+      },
     }),
     {
       name: 'auth-storage', // Key for localStorage

@@ -53,7 +53,13 @@ export default function Register() {
       const response = await authApi.register(data)
       setAuth(response.user, response.accessToken, response.refreshToken)
       toast.success('Registration successful!')
-      navigate('/profile')
+
+      // Redirect based on role (currently all new users are USER)
+      if (response.user.role === 'ADMIN') {
+        navigate('/admin/dashboard')
+      } else {
+        navigate('/home')
+      }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } }
       toast.error(error.response?.data?.message || 'Registration failed. Please try again.')

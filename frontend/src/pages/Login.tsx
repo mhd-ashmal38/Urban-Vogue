@@ -53,7 +53,13 @@ export default function Login() {
       console.log('Login successful:', response)
       setAuth(response.user, response.accessToken, response.refreshToken)
       toast.success('Login successful!')
-      navigate('/profile')
+
+      // Redirect based on role
+      if (response.user.role === 'ADMIN') {
+        navigate('/admin/dashboard')
+      } else {
+        navigate('/home')
+      }
     } catch (err: unknown) {
       console.error('Login error:', err)
       const error = err as { response?: { data?: { message?: string } } }
