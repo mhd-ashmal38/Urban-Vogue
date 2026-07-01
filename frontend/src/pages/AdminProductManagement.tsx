@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { productsApi, categoriesApi, type Product, type Category } from '../services/products'
-import { Plus, Edit, Trash2, X, Upload, Loader2 } from 'lucide-react'
+import { Plus, Edit, Trash2, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
-import { Small } from '../components/ui/typography'
+import { Dialog } from '../components/ui/dialog'
+import { Select } from '../components/ui/select'
+import { FileUpload } from '../components/ui/file-upload'
 
 export default function AdminProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
@@ -15,6 +17,8 @@ export default function AdminProductManagement() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadingImages, setUploadingImages] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -120,18 +124,14 @@ export default function AdminProductManagement() {
     }
   }
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    if (files.length > 5) {
-      toast.error('Maximum 5 images allowed')
-      return
-    }
-    setSelectedFiles(files)
-  }
-
   const removeImage = (index: number) => {
     const newImages = formData.images.filter((_, i) => i !== index)
     setFormData({ ...formData, images: newImages })
+  }
+
+  const removeSelectedFile = (index: number) => {
+    const newFiles = selectedFiles.filter((_, i) => i !== index)
+    setSelectedFiles(newFiles)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,18 +173,28 @@ export default function AdminProductManagement() {
   }
 
   const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
-      return
-    }
+    setProductToDelete({ id, name })
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!productToDelete) return
 
     try {
-      await productsApi.delete(id)
+      await productsApi.delete(productToDelete.id)
       toast.success('Product deleted successfully')
       fetchProducts()
+      setDeleteDialogOpen(false)
+      setProductToDelete(null)
     } catch (err) {
       toast.error('Failed to delete product')
       console.error(err)
     }
+  }
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false)
+    setProductToDelete(null)
   }
 
   if (loading) {
@@ -315,175 +325,154 @@ export default function AdminProductManagement() {
       </div>
 
       {/* Create/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  {editingProduct ? 'Edit Product' : 'Add New Product'}
-                </h2>
-                <button
-                  onClick={closeModal}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
+      <Dialog
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={editingProduct ? 'Edit Product' : 'Add New Product'}
+        size="md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              onClick={closeModal}
+              variant="outline"
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={isSubmitting}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+              onClick={handleSubmit}
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : null}
+              {editingProduct ? 'Update Product' : 'Create Product'}
+            </Button>
+          </div>
+        }
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="name">Product Name *</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Enter product name"
+              required
+            />
+          </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label htmlFor="name">Product Name *</Label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter product name"
-                    required
-                  />
-                </div>
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              placeholder="Enter product description"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
+            />
+          </div>
 
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder="Enter product description"
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="price">Price ($) *</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      placeholder="0.00"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="stock">Stock *</Label>
-                    <Input
-                      id="stock"
-                      type="number"
-                      min="0"
-                      value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      placeholder="0"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="category">Category *</Label>
-                  <select
-                    id="category"
-                    value={formData.categoryId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, categoryId: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Image Upload Section */}
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <Label>Product Images</Label>
-                  <div className="mt-2 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleFileSelect}
-                        className="flex-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
-                      />
-                      <Button
-                        type="button"
-                        onClick={handleImageUpload}
-                        disabled={selectedFiles.length === 0 || uploadingImages}
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
-                      >
-                        {uploadingImages ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Upload className="w-4 h-4" />
-                        )}
-                        Upload
-                      </Button>
-                    </div>
-                    <Small className="text-gray-500">
-                      Max 5 images, 5MB each. Allowed: jpg, jpeg, png, webp, gif
-                    </Small>
-
-                    {/* Uploaded Images Preview */}
-                    {formData.images.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {formData.images.map((image, index) => (
-                          <div key={index} className="relative">
-                            <img
-                              src={image}
-                              alt={`Uploaded ${index + 1}`}
-                              className="h-20 w-20 object-cover rounded"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => removeImage(index)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button
-                    type="button"
-                    onClick={closeModal}
-                    variant="outline"
-                    className="border-gray-300"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                  >
-                    {isSubmitting ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : null}
-                    {editingProduct ? 'Update Product' : 'Create Product'}
-                  </Button>
-                </div>
-              </form>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="price">Price ($) *</Label>
+              <Input
+                id="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="0.00"
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="stock">Stock *</Label>
+              <Input
+                id="stock"
+                type="number"
+                min="0"
+                value={formData.stock}
+                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                placeholder="0"
+                required
+              />
             </div>
           </div>
+
+          <div>
+            <Select
+              label="Category *"
+              value={formData.categoryId}
+              onChange={(value) =>
+                setFormData({ ...formData, categoryId: value })
+              }
+              options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+              placeholder="Select a category"
+            />
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <Label>Product Images</Label>
+            <div className="mt-2">
+              <FileUpload
+                onFilesChange={setSelectedFiles}
+                onUpload={handleImageUpload}
+                selectedFiles={selectedFiles}
+                uploadedFiles={formData.images}
+                onRemoveSelected={removeSelectedFile}
+                onRemoveUploaded={removeImage}
+                uploading={uploadingImages}
+                maxFiles={5}
+                maxSizeMB={5}
+                accept="image/*"
+              />
+            </div>
+          </div>
+        </form>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        isOpen={deleteDialogOpen}
+        onClose={closeDeleteDialog}
+        title="Delete Product"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              onClick={closeDeleteDialog}
+              variant="outline"
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to delete <strong>"{productToDelete?.name}"</strong>? This action cannot be undone.
+          </p>
         </div>
-      )}
+      </Dialog>
     </div>
   )
 }
