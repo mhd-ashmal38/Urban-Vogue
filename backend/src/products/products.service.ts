@@ -158,6 +158,25 @@ export class ProductsService {
   }
 
   /**
+   * Delete multiple products at once
+   * @param ids - Array of product UUIDs to delete
+   * @returns Count of deleted products
+   */
+  async bulkRemove(ids: string[]) {
+    const result = await this.prisma.product.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return {
+      count: result.count,
+    };
+  }
+
+  /**
    * Delete an individual image file
    * @param imageUrl - The URL of the image to delete
    * @returns Success message

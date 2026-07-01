@@ -8,7 +8,7 @@ import { Label } from '../components/ui/label'
 import { Dialog } from '../components/ui/dialog'
 import { Select } from '../components/ui/select'
 import { FileUpload } from '../components/ui/file-upload'
-import { Table, type Column, type Action } from '../components/ui/table'
+import { Table, type Column, type Action, type BulkAction } from '../components/ui/table'
 
 export default function AdminProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
@@ -20,6 +20,8 @@ export default function AdminProductManagement() {
   const [uploadingImages, setUploadingImages] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null)
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
+  const [productsToDelete, setProductsToDelete] = useState<Product[]>([])
 
   // Form state
   const [formData, setFormData] = useState({
@@ -94,6 +96,15 @@ export default function AdminProductManagement() {
       label: '',
       icon: <Trash2 className="w-4 h-4" />,
       onClick: (product) => handleDelete(product.id, product.name),
+      variant: 'danger',
+    },
+  ]
+
+  const bulkActions: BulkAction<Product>[] = [
+    {
+      label: 'Delete Selected',
+      icon: <Trash2 className="w-4 h-4" />,
+      onClick: (selectedProducts) => handleBulkDelete(selectedProducts),
       variant: 'danger',
     },
   ]
@@ -271,6 +282,32 @@ export default function AdminProductManagement() {
     setProductToDelete(null)
   }
 
+  const handleBulkDelete = (selectedProducts: Product[]) => {
+    setProductsToDelete(selectedProducts)
+    setBulkDeleteDialogOpen(true)
+  }
+
+  const confirmBulkDelete = async () => {
+    if (productsToDelete.length === 0) return
+
+    try {
+      const ids = productsToDelete.map((p) => p.id)
+      await productsApi.bulkDelete(ids)
+      toast.success(`${productsToDelete.length} products deleted successfully`)
+      fetchProducts()
+      setBulkDeleteDialogOpen(false)
+      setProductsToDelete([])
+    } catch (err) {
+      toast.error('Failed to delete products')
+      console.error(err)
+    }
+  }
+
+  const closeBulkDeleteDialog = () => {
+    setBulkDeleteDialogOpen(false)
+    setProductsToDelete([])
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -307,9 +344,11 @@ export default function AdminProductManagement() {
           columns={columns}
           data={products}
           actions={actions}
+          bulkActions={bulkActions}
           emptyMessage="No products found. Click 'Add Product' to create one."
           height="calc(100vh - 200px)"
           pageSize={10}
+          selectable={true}
         />
       </div>
 
@@ -460,6 +499,48 @@ export default function AdminProductManagement() {
           <p className="text-gray-700">
             Are you sure you want to delete <strong>"{productToDelete?.name}"</strong>? This action cannot be undone.
           </p>
+        </div>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        isOpen={bulkDeleteDialogOpen}
+        onClose={closeBulkDeleteDialog}
+        title="Delete Multiple Products"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              onClick={closeBulkDeleteDialog}
+              variant="outline"
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmBulkDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to delete <strong>{productsToDelete.length} products</strong>? This action cannot be undone.
+          </p>
+          {productsToDelete.length > 0 && (
+            <div className="max-h-40 overflow-y-auto">
+              <ul className="list-disc list-inside text-sm text-gray-600">
+                {productsToDelete.map((product) => (
+                  <li key={product.id}>{product.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </Dialog>
     </div>

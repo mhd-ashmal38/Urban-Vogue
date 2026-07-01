@@ -17,28 +17,42 @@ export interface Action<T> {
   variant?: 'primary' | 'danger' | 'default'
 }
 
+export interface BulkAction<T> {
+  label: string
+  icon?: React.ReactNode
+  onClick: (selectedRows: T[]) => void
+  className?: string
+  variant?: 'primary' | 'danger' | 'default'
+}
+
 interface TableProps<T> {
   columns: Column<T>[]
   data: T[]
   actions?: Action<T>[]
+  bulkActions?: BulkAction<T>[]
   emptyMessage?: string
   className?: string
   rowKey?: (row: T, index: number) => string
   height?: string
   pageSize?: number
+  selectable?: boolean
 }
 
 export function Table<T>({
   columns,
   data,
   actions,
+  bulkActions,
   emptyMessage = 'No data available',
   className,
   rowKey,
   height,
   pageSize = 10,
+  selectable = false,
 }: TableProps<T>) {
   const [currentPage, setCurrentPage] = React.useState(1)
+  const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set())
+  const [selectAll, setSelectAll] = React.useState(false)
 
   const getRowKey = (row: T, index: number) => {
     if (rowKey) return rowKey(row, index)
@@ -62,10 +76,43 @@ export function Table<T>({
     setCurrentPage((prev) => Math.min(prev + 1, totalPages))
   }
 
+  const handleRowSelect = (rowKey: string) => {
+    setSelectedRows((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(rowKey)) {
+        newSet.delete(rowKey)
+      } else {
+        newSet.add(rowKey)
+      }
+      return newSet
+    })
+  }
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedRows(new Set())
+    } else {
+      setSelectedRows(new Set(paginatedData.map((row, idx) => getRowKey(row, startIndex + idx))))
+    }
+    setSelectAll(!selectAll)
+  }
+
+  const selectedData = data.filter((row, idx) => selectedRows.has(getRowKey(row, idx)))
+
   const tableContent = (
     <table className="w-full">
       <thead className="bg-gray-50 flex-shrink-0">
         <tr>
+          {selectable && (
+            <th className="px-6 py-3 text-left">
+              <input
+                type="checkbox"
+                checked={selectAll && selectedRows.size === paginatedData.length}
+                onChange={handleSelectAll}
+                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+              />
+            </th>
+          )}
           {columns.map((column) => (
             <th
               key={column.key}
@@ -88,7 +135,7 @@ export function Table<T>({
         {data.length === 0 ? (
           <tr>
             <td
-              colSpan={columns.length + (actions && actions.length > 0 ? 1 : 0)}
+              colSpan={columns.length + (actions && actions.length > 0 ? 1 : 0) + (selectable ? 1 : 0)}
               className="px-6 py-12 text-center text-gray-500"
             >
               {emptyMessage}
@@ -97,6 +144,16 @@ export function Table<T>({
         ) : (
           paginatedData.map((row, rowIndex) => (
             <tr key={getRowKey(row, startIndex + rowIndex)} className="hover:bg-gray-50">
+              {selectable && (
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedRows.has(getRowKey(row, startIndex + rowIndex))}
+                    onChange={() => handleRowSelect(getRowKey(row, startIndex + rowIndex))}
+                    className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                  />
+                </td>
+              )}
               {columns.map((column) => (
                 <td
                   key={column.key}
@@ -141,10 +198,33 @@ export function Table<T>({
 
   const paginationContent = showPagination && (
     <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-200 flex-shrink-0">
-      <div className="text-sm text-gray-600">
-        <span className="font-medium text-gray-900">{startIndex + 1}</span> to{' '}
-        <span className="font-medium text-gray-900">{Math.min(endIndex, data.length)}</span> of{' '}
-        <span className="font-medium text-gray-900">{data.length}</span> results
+      <div className="flex items-center gap-4">
+        <div className="text-sm text-gray-600">
+          <span className="font-medium text-gray-900">{startIndex + 1}</span> to{' '}
+          <span className="font-medium text-gray-900">{Math.min(endIndex, data.length)}</span> of{' '}
+          <span className="font-medium text-gray-900">{data.length}</span> results
+        </div>
+        {selectable && selectedRows.size > 0 && (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">{selectedRows.size} selected</span>
+            {bulkActions && bulkActions.map((action, idx) => (
+              <button
+                key={idx}
+                onClick={() => action.onClick(selectedData)}
+                className={cn(
+                  'inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium',
+                  action.variant === 'danger' && 'bg-red-50 text-red-600 hover:bg-red-100',
+                  action.variant === 'primary' && 'bg-purple-50 text-purple-600 hover:bg-purple-100',
+                  (!action.variant || action.variant === 'default') && 'bg-gray-50 text-gray-600 hover:bg-gray-100',
+                  action.className
+                )}
+              >
+                {action.icon}
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-1">
         <button
@@ -201,6 +281,16 @@ export function Table<T>({
           <table className="w-full">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
+                {selectable && (
+                  <th className="px-6 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={selectAll && selectedRows.size === paginatedData.length}
+                      onChange={handleSelectAll}
+                      className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                    />
+                  </th>
+                )}
                 {columns.map((column) => (
                   <th
                     key={column.key}
@@ -223,7 +313,7 @@ export function Table<T>({
               {data.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={columns.length + (actions && actions.length > 0 ? 1 : 0)}
+                    colSpan={columns.length + (actions && actions.length > 0 ? 1 : 0) + (selectable ? 1 : 0)}
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     {emptyMessage}
@@ -232,6 +322,16 @@ export function Table<T>({
               ) : (
                 paginatedData.map((row, rowIndex) => (
                   <tr key={getRowKey(row, startIndex + rowIndex)} className="hover:bg-gray-50">
+                    {selectable && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedRows.has(getRowKey(row, startIndex + rowIndex))}
+                          onChange={() => handleRowSelect(getRowKey(row, startIndex + rowIndex))}
+                          className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                        />
+                      </td>
+                    )}
                     {columns.map((column) => (
                       <td
                         key={column.key}

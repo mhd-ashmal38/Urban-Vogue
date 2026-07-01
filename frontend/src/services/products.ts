@@ -66,6 +66,11 @@ interface DeleteImageResponse {
   filename: string
 }
 
+interface BulkDeleteResponse {
+  message: string
+  count: number
+}
+
 // Categories API methods
 export const categoriesApi = {
   // Get all categories
@@ -159,6 +164,14 @@ export const productsApi = {
   deleteImage: async (imageUrl: string): Promise<DeleteImageResponse> => {
     const response = await api.delete<DeleteImageResponse>('/products/delete-image', {
       data: { imageUrl },
+    })
+    return response.data
+  },
+
+  // Bulk delete products (admin only)
+  bulkDelete: async (ids: string[]): Promise<BulkDeleteResponse> => {
+    const response = await api.delete<BulkDeleteResponse>('/products/bulk-delete', {
+      data: { ids },
     })
     return response.data
   },

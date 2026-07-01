@@ -180,11 +180,51 @@ export class ProductsController {
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Delete an individual image file (admin only)' })
   @ApiResponse({ status: 200, description: 'Image deleted successfully' })
-  @ApiResponse({ status: 400, description: 'Invalid image URL or file not found' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid image URL or file not found',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   deleteImage(@Body('imageUrl') imageUrl: string) {
     return this.productsService.deleteImage(imageUrl);
+  }
+
+  /**
+   * DELETE /products/bulk-delete
+   * Delete multiple products at once (admin only)
+   * @param ids - Array of product UUIDs to delete
+   * @returns Success message and count of deleted products
+   *
+   * HTTP Status: 200 OK or 401 Unauthorized or 403 Forbidden
+   *
+   * RBAC: Requires ADMIN role
+   */
+  @Delete('bulk-delete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete multiple products (admin only)' })
+  @ApiResponse({ status: 200, description: 'Products deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        ids: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+    },
+  })
+  async bulkRemove(@Body('ids') ids: string[]) {
+    const result = await this.productsService.bulkRemove(ids);
+    return {
+      message: `${result.count} products deleted successfully`,
+      count: result.count,
+    };
   }
 
   /**
