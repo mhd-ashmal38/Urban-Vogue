@@ -9,6 +9,7 @@ import ResetPassword from './pages/ResetPassword'
 import AdminDashboard from './pages/AdminDashboard'
 import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
+import AdminProductManagement from './pages/AdminProductManagement'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
@@ -38,6 +39,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/products"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminProductManagement />
               </ProtectedRoute>
             }
           />

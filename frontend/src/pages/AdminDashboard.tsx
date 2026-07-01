@@ -1,4 +1,5 @@
 import { Shield, Users, ShoppingBag, BarChart3 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 
 export default function AdminDashboard() {
@@ -63,9 +64,12 @@ export default function AdminDashboard() {
             <button className="bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors">
               Manage Users
             </button>
-            <button className="bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition-colors">
+            <Link
+              to="/admin/products"
+              className="bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition-colors text-center"
+            >
               Manage Products
-            </button>
+            </Link>
             <button className="bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors">
               View Orders
             </button>
