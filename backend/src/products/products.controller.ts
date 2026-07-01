@@ -10,6 +10,8 @@ import {
   HttpStatus,
   UseGuards,
   Query,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -18,13 +20,16 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiQuery,
+  ApiConsumes,
 } from '@nestjs/swagger';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { multerConfig } from '../common/config/multer.config';
 
 /**
  * ProductsController - Handles HTTP requests for product operations
@@ -183,6 +188,45 @@ export class ProductsController {
     return {
       message: 'Product deleted successfully',
       product,
+    };
+  }
+
+  /**
+   * POST /products/upload
+   * Upload product images (admin only)
+   * @param files - Array of image files (max 5)
+   * @returns Array of uploaded image URLs
+   *
+   * HTTP Status: 201 Created or 400 Bad Request or 401 Unauthorized or 403 Forbidden
+   *
+   * RBAC: Requires ADMIN role
+   *
+   * File constraints:
+   * - Max 5 files per request
+   * - Only image files (jpg, jpeg, png, gif, webp)
+   * - Max 5MB per file
+   */
+  @Post('upload')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @UseInterceptors(FilesInterceptor('images', 5, multerConfig))
+  @HttpCode(HttpStatus.CREATED)
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({ summary: 'Upload product images (admin only)' })
+  @ApiResponse({ status: 201, description: 'Images uploaded successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid file or too many files' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  uploadImages(@UploadedFiles() files: Express.Multer.File[]) {
+    // Generate URLs for uploaded files
+    const imageUrls = files.map((file) => {
+      return `${process.env.BACKEND_URL || 'http://localhost:3000'}/uploads/${file.filename}`;
+    });
+
+    return {
+      message: 'Images uploaded successfully',
+      images: imageUrls,
     };
   }
 }
