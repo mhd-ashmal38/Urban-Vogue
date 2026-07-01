@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label'
 import { Dialog } from '../components/ui/dialog'
 import { Select } from '../components/ui/select'
 import { FileUpload } from '../components/ui/file-upload'
+import { Table, type Column, type Action } from '../components/ui/table'
 
 export default function AdminProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
@@ -32,6 +33,70 @@ export default function AdminProductManagement() {
 
   // Image upload state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+
+  const columns: Column<Product>[] = [
+    {
+      header: 'Product',
+      key: 'name',
+      render: (_value, product) => (
+        <div className="flex items-center">
+          {product.images && product.images.length > 0 ? (
+            <img
+              src={product.images[0]}
+              alt={product.name}
+              className="h-10 w-10 rounded object-cover mr-3"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded bg-gray-200 mr-3 flex items-center justify-center text-gray-400 text-xs">
+              No img
+            </div>
+          )}
+          <div>
+            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+            <div className="text-sm text-gray-500 max-w-xs truncate">{product.description}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Category',
+      key: 'category',
+      render: (_value, product) => (
+        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+          {product.category.name}
+        </span>
+      ),
+    },
+    {
+      header: 'Price',
+      key: 'price',
+      render: (value) => `$${Number(value).toFixed(2)}`,
+    },
+    {
+      header: 'Stock',
+      key: 'stock',
+    },
+    {
+      header: 'Images',
+      key: 'images',
+      render: (_value, product) => product.images?.length || 0,
+    },
+  ]
+
+  const actions: Action<Product>[] = [
+    {
+      label: '',
+      icon: <Edit className="w-4 h-4" />,
+      onClick: (product) => openEditModal(product),
+      variant: 'primary',
+    },
+    {
+      label: '',
+      icon: <Trash2 className="w-4 h-4" />,
+      onClick: (product) => handleDelete(product.id, product.name),
+      variant: 'danger',
+    },
+  ]
 
   const fetchProducts = async () => {
     try {
@@ -238,99 +303,14 @@ export default function AdminProductManagement() {
 
       {/* Products Table */}
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Images
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {products.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                      No products found. Click "Add Product" to create one.
-                    </td>
-                  </tr>
-                ) : (
-                  products.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center">
-                          {product.images && product.images.length > 0 ? (
-                            <img
-                              src={product.images[0]}
-                              alt={product.name}
-                              className="h-10 w-10 rounded object-cover mr-3"
-                            />
-                          ) : (
-                            <div className="h-10 w-10 rounded bg-gray-200 mr-3 flex items-center justify-center text-gray-400 text-xs">
-                              No img
-                            </div>
-                          )}
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {product.name}
-                            </div>
-                            <div className="text-sm text-gray-500 max-w-xs truncate">
-                              {product.description}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
-                          {product.category.name}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${Number(product.price).toFixed(2)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {product.stock}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {product.images?.length || 0}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openEditModal(product)}
-                          className="text-purple-600 hover:text-purple-900 mr-4"
-                        >
-                          <Edit className="w-4 h-4 inline" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id, product.name)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          <Trash2 className="w-4 h-4 inline" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <Table
+          columns={columns}
+          data={products}
+          actions={actions}
+          emptyMessage="No products found. Click 'Add Product' to create one."
+          height="calc(100vh - 200px)"
+          pageSize={10}
+        />
       </div>
 
       {/* Create/Edit Modal */}
