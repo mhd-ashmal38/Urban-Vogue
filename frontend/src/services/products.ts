@@ -61,6 +61,11 @@ interface UploadResponse {
   images: string[]
 }
 
+interface DeleteImageResponse {
+  message: string
+  filename: string
+}
+
 // Categories API methods
 export const categoriesApi = {
   // Get all categories
@@ -146,6 +151,14 @@ export const productsApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+    })
+    return response.data
+  },
+
+  // Delete individual image (admin only)
+  deleteImage: async (imageUrl: string): Promise<DeleteImageResponse> => {
+    const response = await api.delete<DeleteImageResponse>('/products/delete-image', {
+      data: { imageUrl },
     })
     return response.data
   },

@@ -113,7 +113,7 @@ export default function AdminProductManagement() {
     setUploadingImages(true)
     try {
       const response = await productsApi.uploadImages(selectedFiles)
-      setFormData({ ...formData, images: response.images })
+      setFormData({ ...formData, images: [...formData.images, ...response.images] })
       setSelectedFiles([])
       toast.success('Images uploaded successfully')
     } catch (err) {
@@ -124,9 +124,18 @@ export default function AdminProductManagement() {
     }
   }
 
-  const removeImage = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index)
-    setFormData({ ...formData, images: newImages })
+  const removeImage = async (index: number) => {
+    const imageUrl = formData.images[index]
+    
+    try {
+      await productsApi.deleteImage(imageUrl)
+      const newImages = formData.images.filter((_, i) => i !== index)
+      setFormData({ ...formData, images: newImages })
+      toast.success('Image deleted successfully')
+    } catch (err) {
+      toast.error('Failed to delete image')
+      console.error(err)
+    }
   }
 
   const removeSelectedFile = (index: number) => {

@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /**
  * ProductsService - Handles all product-related business logic
@@ -153,5 +155,32 @@ export class ProductsService {
     });
 
     return product;
+  }
+
+  /**
+   * Delete an individual image file
+   * @param imageUrl - The URL of the image to delete
+   * @returns Success message
+   */
+  deleteImage(imageUrl: string) {
+    // Extract filename from URL
+    const filename = imageUrl.split('/').pop();
+
+    if (!filename) {
+      throw new Error('Invalid image URL');
+    }
+
+    const filePath = path.join(process.cwd(), 'uploads', filename);
+
+    // Check if file exists
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      return {
+        message: 'Image deleted successfully',
+        filename,
+      };
+    }
+
+    throw new Error('Image file not found');
   }
 }

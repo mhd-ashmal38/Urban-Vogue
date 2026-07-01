@@ -165,6 +165,29 @@ export class ProductsController {
   }
 
   /**
+   * DELETE /products/delete-image
+   * Delete an individual image file (admin only)
+   * @param imageUrl - The URL of the image to delete
+   * @returns Success message
+   *
+   * HTTP Status: 200 OK or 400 Bad Request or 401 Unauthorized or 403 Forbidden
+   *
+   * RBAC: Requires ADMIN role
+   */
+  @Delete('delete-image')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete an individual image file (admin only)' })
+  @ApiResponse({ status: 200, description: 'Image deleted successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid image URL or file not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  deleteImage(@Body('imageUrl') imageUrl: string) {
+    return this.productsService.deleteImage(imageUrl);
+  }
+
+  /**
    * DELETE /products/:id
    * Delete a product (admin only)
    * @param id - Product's UUID from URL parameter
