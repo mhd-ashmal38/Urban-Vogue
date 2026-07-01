@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { CategoriesModule } from './categories/categories.module';
 
 /**
  * AppModule - The root module of the application
@@ -22,7 +23,7 @@ import { AuthModule } from './auth/auth.module';
  * - Applied globally so every endpoint benefits from validation
  */
 @Module({
-  imports: [PrismaModule, UsersModule, AuthModule],
+  imports: [PrismaModule, UsersModule, AuthModule, CategoriesModule],
   controllers: [AppController],
   providers: [
     AppService,
