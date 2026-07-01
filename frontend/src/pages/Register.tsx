@@ -58,7 +58,7 @@ export default function Register() {
       if (response.user.role === 'ADMIN') {
         navigate('/admin/dashboard')
       } else {
-        navigate('/home')
+        navigate('/products')
       }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } }
