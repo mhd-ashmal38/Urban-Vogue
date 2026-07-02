@@ -16,6 +16,8 @@ export interface Product {
   price: number
   stock: number
   images: string[]
+  sizes: string[]
+  colors: string[]
   categoryId: string
   category: Category
   createdAt: string
@@ -39,6 +41,8 @@ interface CreateProductDto {
   stock: number
   categoryId: string
   images?: string[]
+  sizes?: string[]
+  colors?: string[]
 }
 
 interface UpdateProductDto {
@@ -48,6 +52,8 @@ interface UpdateProductDto {
   stock?: number
   categoryId?: string
   images?: string[]
+  sizes?: string[]
+  colors?: string[]
 }
 
 interface DeleteResponse {

@@ -43,6 +43,8 @@ model Product {
   price       Decimal  @db.Decimal(10, 2)
   stock       Int      @default(0)
   images      String[]
+  sizes       String[] @default([])
+  colors      String[] @default([])
   categoryId  String
   category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())

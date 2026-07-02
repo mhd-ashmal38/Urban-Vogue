@@ -33,10 +33,18 @@ export default function AdminProductManagement() {
     stock: '',
     categoryId: '',
     images: [] as string[],
+    sizes: [] as string[],
+    colors: [] as string[],
   })
 
   // Image upload state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+
+  // Size input state
+  const [sizeInput, setSizeInput] = useState('')
+
+  // Color input state
+  const [colorInput, setColorInput] = useState('')
 
   const columns: Column<Product>[] = [
     {
@@ -83,6 +91,37 @@ export default function AdminProductManagement() {
       header: 'Stock',
       key: 'stock',
       sortable: true,
+    },
+    {
+      header: 'Variants',
+      key: 'variants',
+      render: (_value, product) => (
+        <div className="space-y-1">
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              <span className="text-xs text-gray-500">Sizes:</span>
+              {product.sizes.map((size, i) => (
+                <span key={i} className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
+                  {size}
+                </span>
+              ))}
+            </div>
+          )}
+          {product.colors && product.colors.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              <span className="text-xs text-gray-500">Colors:</span>
+              {product.colors.map((color, i) => (
+                <span key={i} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                  {color}
+                </span>
+              ))}
+            </div>
+          )}
+          {!product.sizes?.length && !product.colors?.length && (
+            <span className="text-xs text-gray-400">No variants</span>
+          )}
+        </div>
+      ),
     },
   ]
 
@@ -156,8 +195,12 @@ export default function AdminProductManagement() {
       stock: '',
       categoryId: '',
       images: [],
+      sizes: [],
+      colors: [],
     })
     setSelectedFiles([])
+    setSizeInput('')
+    setColorInput('')
     setIsModalOpen(true)
   }
 
@@ -170,8 +213,12 @@ export default function AdminProductManagement() {
       stock: String(product.stock),
       categoryId: product.categoryId,
       images: product.images || [],
+      sizes: product.sizes || [],
+      colors: product.colors || [],
     })
     setSelectedFiles([])
+    setSizeInput('')
+    setColorInput('')
     setIsModalOpen(true)
   }
 
@@ -185,8 +232,12 @@ export default function AdminProductManagement() {
       stock: '',
       categoryId: '',
       images: [],
+      sizes: [],
+      colors: [],
     })
     setSelectedFiles([])
+    setSizeInput('')
+    setColorInput('')
   }
 
   const handleImageUpload = async () => {
@@ -246,6 +297,8 @@ export default function AdminProductManagement() {
         stock: Number(formData.stock),
         categoryId: formData.categoryId,
         images: formData.images,
+        sizes: formData.sizes,
+        colors: formData.colors,
       }
 
       if (editingProduct) {
@@ -532,6 +585,122 @@ export default function AdminProductManagement() {
                 accept="image/*"
               />
             </div>
+          </div>
+
+          {/* Sizes Section */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <Label>Available Sizes</Label>
+            <div className="mt-2 flex gap-2">
+              <Input
+                value={sizeInput}
+                onChange={(e) => setSizeInput(e.target.value)}
+                placeholder="Enter size (e.g., S, M, L, XL)"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (sizeInput.trim() && !formData.sizes.includes(sizeInput.trim())) {
+                      setFormData({ ...formData, sizes: [...formData.sizes, sizeInput.trim()] })
+                      setSizeInput('')
+                    }
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                onClick={() => {
+                  if (sizeInput.trim() && !formData.sizes.includes(sizeInput.trim())) {
+                    setFormData({ ...formData, sizes: [...formData.sizes, sizeInput.trim()] })
+                    setSizeInput('')
+                  }
+                }}
+                variant="outline"
+                className="border-gray-300"
+              >
+                Add
+              </Button>
+            </div>
+            {formData.sizes.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {formData.sizes.map((size, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
+                  >
+                    {size}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          sizes: formData.sizes.filter((_, i) => i !== index),
+                        })
+                      }}
+                      className="ml-2 text-purple-600 hover:text-purple-900"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Colors Section */}
+          <div className="border border-gray-200 rounded-lg p-4">
+            <Label>Available Colors</Label>
+            <div className="mt-2 flex gap-2">
+              <Input
+                value={colorInput}
+                onChange={(e) => setColorInput(e.target.value)}
+                placeholder="Enter color (e.g., Red, Blue, Black)"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (colorInput.trim() && !formData.colors.includes(colorInput.trim())) {
+                      setFormData({ ...formData, colors: [...formData.colors, colorInput.trim()] })
+                      setColorInput('')
+                    }
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                onClick={() => {
+                  if (colorInput.trim() && !formData.colors.includes(colorInput.trim())) {
+                    setFormData({ ...formData, colors: [...formData.colors, colorInput.trim()] })
+                    setColorInput('')
+                  }
+                }}
+                variant="outline"
+                className="border-gray-300"
+              >
+                Add
+              </Button>
+            </div>
+            {formData.colors.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {formData.colors.map((color, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                  >
+                    {color}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          colors: formData.colors.filter((_, i) => i !== index),
+                        })
+                      }}
+                      className="ml-2 text-blue-600 hover:text-blue-900"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </form>
       </Dialog>

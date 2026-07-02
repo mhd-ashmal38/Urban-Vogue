@@ -49,4 +49,18 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
     type: [String],
   })
   images?: string[];
+
+  @ApiProperty({
+    example: ['S', 'M', 'L', 'XL'],
+    required: false,
+    type: [String],
+  })
+  sizes?: string[];
+
+  @ApiProperty({
+    example: ['Red', 'Blue', 'Black'],
+    required: false,
+    type: [String],
+  })
+  colors?: string[];
 }
