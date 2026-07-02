@@ -136,6 +136,46 @@ export class CategoriesController {
   }
 
   /**
+   * DELETE /categories/bulk-delete
+   * Delete multiple categories at once (admin only)
+   * @param ids - Array of category UUIDs to delete
+   * @returns Success message and count of deleted categories
+   *
+   * HTTP Status: 200 OK or 401 Unauthorized or 403 Forbidden
+   *
+   * RBAC: Requires ADMIN role
+   *
+   * Note: Due to ON DELETE CASCADE in the schema,
+   * deleting categories will also delete all their products
+   */
+  @Delete('bulk-delete')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete multiple categories (admin only)' })
+  @ApiResponse({ status: 200, description: 'Categories deleted successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        ids: {
+          type: 'array',
+          items: { type: 'string' },
+        },
+      },
+    },
+  })
+  async bulkRemove(@Body('ids') ids: string[]) {
+    const result = await this.categoriesService.bulkRemove(ids);
+    return {
+      message: `${result.count} categories deleted successfully`,
+      count: result.count,
+    };
+  }
+
+  /**
    * DELETE /categories/:id
    * Delete a category (admin only)
    * @param id - Category's UUID from URL parameter

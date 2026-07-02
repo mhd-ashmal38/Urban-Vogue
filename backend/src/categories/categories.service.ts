@@ -118,4 +118,26 @@ export class CategoriesService {
 
     return category;
   }
+
+  /**
+   * Delete multiple categories at once
+   * @param ids - Array of category UUIDs to delete
+   * @returns Count of deleted categories
+   *
+   * Note: Due to ON DELETE CASCADE in the schema,
+   * deleting categories will also delete all their products
+   */
+  async bulkRemove(ids: string[]) {
+    const result = await this.prisma.category.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return {
+      count: result.count,
+    };
+  }
 }

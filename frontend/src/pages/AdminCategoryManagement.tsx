@@ -186,8 +186,8 @@ export default function AdminCategoryManagement() {
     if (categoriesToDelete.length === 0) return
 
     try {
-      // Delete categories one by one since there's no bulk delete API for categories
-      await Promise.all(categoriesToDelete.map((cat) => categoriesApi.delete(cat.id)))
+      const ids = categoriesToDelete.map((cat) => cat.id)
+      await categoriesApi.bulkDelete(ids)
       toast.success(`${categoriesToDelete.length} categories deleted successfully`)
       fetchCategories()
       setBulkDeleteDialogOpen(false)

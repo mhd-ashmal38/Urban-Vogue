@@ -71,6 +71,11 @@ interface BulkDeleteResponse {
   count: number
 }
 
+interface BulkDeleteCategoriesResponse {
+  message: string
+  count: number
+}
+
 // Categories API methods
 export const categoriesApi = {
   // Get all categories
@@ -100,6 +105,14 @@ export const categoriesApi = {
   // Delete category (admin only)
   delete: async (id: string): Promise<DeleteResponse> => {
     const response = await api.delete<DeleteResponse>(`/categories/${id}`)
+    return response.data
+  },
+
+  // Bulk delete categories (admin only)
+  bulkDelete: async (ids: string[]): Promise<BulkDeleteCategoriesResponse> => {
+    const response = await api.delete<BulkDeleteCategoriesResponse>('/categories/bulk-delete', {
+      data: { ids },
+    })
     return response.data
   },
 }
