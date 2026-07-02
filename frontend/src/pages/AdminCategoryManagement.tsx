@@ -6,10 +6,11 @@ import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Dialog } from '../components/ui/dialog'
-import { Table, type Column, type Action, type BulkAction } from '../components/ui/table'
+import { Table, type Column, type Action } from '../components/ui/table'
 
 export default function AdminCategoryManagement() {
   const [categories, setCategories] = useState<Category[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -17,7 +18,6 @@ export default function AdminCategoryManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [categoryToDelete, setCategoryToDelete] = useState<{ id: string; name: string } | null>(null)
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
-  const [categoriesToDelete, setCategoriesToDelete] = useState<Category[]>([])
 
   // Form state
   const [formData, setFormData] = useState({
@@ -60,15 +60,6 @@ export default function AdminCategoryManagement() {
       label: '',
       icon: <Trash2 className="w-4 h-4" />,
       onClick: (category) => handleDelete(category.id, category.name),
-      variant: 'danger',
-    },
-  ]
-
-  const bulkActions: BulkAction<Category>[] = [
-    {
-      label: 'Delete Selected',
-      icon: <Trash2 className="w-4 h-4" />,
-      onClick: (selectedCategories) => handleBulkDelete(selectedCategories),
       variant: 'danger',
     },
   ]
@@ -177,21 +168,21 @@ export default function AdminCategoryManagement() {
     setCategoryToDelete(null)
   }
 
-  const handleBulkDelete = (selectedCategories: Category[]) => {
-    setCategoriesToDelete(selectedCategories)
+  const handleBulkDelete = () => {
+    if (selectedCategories.length === 0) return
     setBulkDeleteDialogOpen(true)
   }
 
   const confirmBulkDelete = async () => {
-    if (categoriesToDelete.length === 0) return
+    if (selectedCategories.length === 0) return
 
     try {
-      const ids = categoriesToDelete.map((cat) => cat.id)
+      const ids = selectedCategories.map((cat) => cat.id)
       await categoriesApi.bulkDelete(ids)
-      toast.success(`${categoriesToDelete.length} categories deleted successfully`)
+      toast.success(`${selectedCategories.length} categories deleted successfully`)
       fetchCategories()
       setBulkDeleteDialogOpen(false)
-      setCategoriesToDelete([])
+      setSelectedCategories([])
     } catch (err) {
       toast.error('Failed to delete categories')
       console.error(err)
@@ -200,7 +191,6 @@ export default function AdminCategoryManagement() {
 
   const closeBulkDeleteDialog = () => {
     setBulkDeleteDialogOpen(false)
-    setCategoriesToDelete([])
   }
 
   if (loading) {
@@ -223,13 +213,24 @@ export default function AdminCategoryManagement() {
             <h1 className="text-3xl font-bold text-gray-900">Category Management</h1>
             <p className="text-gray-600 mt-1">Manage your product categories</p>
           </div>
-          <Button
-            onClick={openCreateModal}
-            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Add Category
-          </Button>
+          <div className="flex gap-3">
+            {selectedCategories.length > 0 && (
+              <Button
+                onClick={handleBulkDelete}
+                className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+              >
+                <Trash2 className="w-5 h-5" />
+                Delete Selected ({selectedCategories.length})
+              </Button>
+            )}
+            <Button
+              onClick={openCreateModal}
+              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Add Category
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -239,11 +240,11 @@ export default function AdminCategoryManagement() {
           columns={columns}
           data={categories}
           actions={actions}
-          bulkActions={bulkActions}
           emptyMessage="No categories found. Click 'Add Category' to create one."
           height="calc(100vh - 200px)"
           pageSize={10}
           selectable={true}
+          onSelectionChange={setSelectedCategories}
         />
       </div>
 
@@ -366,12 +367,12 @@ export default function AdminCategoryManagement() {
       >
         <div className="space-y-4">
           <p className="text-gray-700">
-            Are you sure you want to delete <strong>{categoriesToDelete.length} categories</strong>? This action cannot be undone and will also delete all products in these categories.
+            Are you sure you want to delete <strong>{selectedCategories.length} categories</strong>? This action cannot be undone and will also delete all products in these categories.
           </p>
-          {categoriesToDelete.length > 0 && (
+          {selectedCategories.length > 0 && (
             <div className="max-h-40 overflow-y-auto">
               <ul className="list-disc list-inside text-sm text-gray-600">
-                {categoriesToDelete.map((category) => (
+                {selectedCategories.map((category) => (
                   <li key={category.id}>{category.name}</li>
                 ))}
               </ul>

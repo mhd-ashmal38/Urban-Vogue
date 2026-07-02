@@ -29,38 +29,46 @@ interface TableProps<T> {
   columns: Column<T>[]
   data: T[]
   actions?: Action<T>[]
-  bulkActions?: BulkAction<T>[]
   emptyMessage?: string
   className?: string
   rowKey?: (row: T, index: number) => string
   height?: string
   pageSize?: number
   selectable?: boolean
+  onSelectionChange?: (selectedRows: T[]) => void
 }
 
 export function Table<T>({
   columns,
   data,
   actions,
-  bulkActions,
   emptyMessage = 'No data available',
   className,
   rowKey,
   height,
   pageSize = 10,
   selectable = false,
+  onSelectionChange,
 }: TableProps<T>) {
   const [currentPage, setCurrentPage] = React.useState(1)
   const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set())
   const [selectAll, setSelectAll] = React.useState(false)
 
-  const getRowKey = (row: T, index: number) => {
+  const getRowKey = React.useCallback((row: T, index: number) => {
     if (rowKey) return rowKey(row, index)
     if (typeof row === 'object' && row !== null && 'id' in row) {
       return (row as Record<string, unknown>).id as string
     }
     return index.toString()
-  }
+  }, [rowKey])
+
+  // Notify parent when selection changes
+  React.useEffect(() => {
+    if (onSelectionChange) {
+      const selectedData = data.filter((row, idx) => selectedRows.has(getRowKey(row, idx)))
+      onSelectionChange(selectedData)
+    }
+  }, [selectedRows, data, onSelectionChange, getRowKey])
 
   const totalPages = Math.ceil(data.length / pageSize)
   const startIndex = (currentPage - 1) * pageSize
@@ -96,8 +104,6 @@ export function Table<T>({
     }
     setSelectAll(!selectAll)
   }
-
-  const selectedData = data.filter((row, idx) => selectedRows.has(getRowKey(row, idx)))
 
   const tableContent = (
     <table className="w-full">
@@ -198,33 +204,10 @@ export function Table<T>({
 
   const paginationContent = showPagination && (
     <div className="flex items-center justify-between px-6 py-4 bg-white border-t border-gray-200 flex-shrink-0">
-      <div className="flex items-center gap-4">
-        <div className="text-sm text-gray-600">
-          <span className="font-medium text-gray-900">{startIndex + 1}</span> to{' '}
-          <span className="font-medium text-gray-900">{Math.min(endIndex, data.length)}</span> of{' '}
-          <span className="font-medium text-gray-900">{data.length}</span> results
-        </div>
-        {selectable && selectedRows.size > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">{selectedRows.size} selected</span>
-            {bulkActions && bulkActions.map((action, idx) => (
-              <button
-                key={idx}
-                onClick={() => action.onClick(selectedData)}
-                className={cn(
-                  'inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium',
-                  action.variant === 'danger' && 'bg-red-50 text-red-600 hover:bg-red-100',
-                  action.variant === 'primary' && 'bg-purple-50 text-purple-600 hover:bg-purple-100',
-                  (!action.variant || action.variant === 'default') && 'bg-gray-50 text-gray-600 hover:bg-gray-100',
-                  action.className
-                )}
-              >
-                {action.icon}
-                {action.label}
-              </button>
-            ))}
-          </div>
-        )}
+      <div className="text-sm text-gray-600">
+        <span className="font-medium text-gray-900">{startIndex + 1}</span> to{' '}
+        <span className="font-medium text-gray-900">{Math.min(endIndex, data.length)}</span> of{' '}
+        <span className="font-medium text-gray-900">{data.length}</span> results
       </div>
       <div className="flex items-center gap-1">
         <button

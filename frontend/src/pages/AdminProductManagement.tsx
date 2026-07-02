@@ -8,10 +8,11 @@ import { Label } from '../components/ui/label'
 import { Dialog } from '../components/ui/dialog'
 import { Select } from '../components/ui/select'
 import { FileUpload } from '../components/ui/file-upload'
-import { Table, type Column, type Action, type BulkAction } from '../components/ui/table'
+import { Table, type Column, type Action } from '../components/ui/table'
 
 export default function AdminProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
+  const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -21,7 +22,6 @@ export default function AdminProductManagement() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null)
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
-  const [productsToDelete, setProductsToDelete] = useState<Product[]>([])
 
   // Form state
   const [formData, setFormData] = useState({
@@ -96,15 +96,6 @@ export default function AdminProductManagement() {
       label: '',
       icon: <Trash2 className="w-4 h-4" />,
       onClick: (product) => handleDelete(product.id, product.name),
-      variant: 'danger',
-    },
-  ]
-
-  const bulkActions: BulkAction<Product>[] = [
-    {
-      label: 'Delete Selected',
-      icon: <Trash2 className="w-4 h-4" />,
-      onClick: (selectedProducts) => handleBulkDelete(selectedProducts),
       variant: 'danger',
     },
   ]
@@ -282,21 +273,21 @@ export default function AdminProductManagement() {
     setProductToDelete(null)
   }
 
-  const handleBulkDelete = (selectedProducts: Product[]) => {
-    setProductsToDelete(selectedProducts)
+  const handleBulkDelete = () => {
+    if (selectedProducts.length === 0) return
     setBulkDeleteDialogOpen(true)
   }
 
   const confirmBulkDelete = async () => {
-    if (productsToDelete.length === 0) return
+    if (selectedProducts.length === 0) return
 
     try {
-      const ids = productsToDelete.map((p) => p.id)
+      const ids = selectedProducts.map((p) => p.id)
       await productsApi.bulkDelete(ids)
-      toast.success(`${productsToDelete.length} products deleted successfully`)
+      toast.success(`${selectedProducts.length} products deleted successfully`)
       fetchProducts()
       setBulkDeleteDialogOpen(false)
-      setProductsToDelete([])
+      setSelectedProducts([])
     } catch (err) {
       toast.error('Failed to delete products')
       console.error(err)
@@ -305,7 +296,6 @@ export default function AdminProductManagement() {
 
   const closeBulkDeleteDialog = () => {
     setBulkDeleteDialogOpen(false)
-    setProductsToDelete([])
   }
 
   if (loading) {
@@ -328,13 +318,24 @@ export default function AdminProductManagement() {
             <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
             <p className="text-gray-600 mt-1">Manage your product inventory</p>
           </div>
-          <Button
-            onClick={openCreateModal}
-            className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-          >
-            <Plus className="w-5 h-5" />
-            Add Product
-          </Button>
+          <div className="flex gap-3">
+            {selectedProducts.length > 0 && (
+              <Button
+                onClick={handleBulkDelete}
+                className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+              >
+                <Trash2 className="w-5 h-5" />
+                Delete Selected ({selectedProducts.length})
+              </Button>
+            )}
+            <Button
+              onClick={openCreateModal}
+              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Add Product
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -344,11 +345,11 @@ export default function AdminProductManagement() {
           columns={columns}
           data={products}
           actions={actions}
-          bulkActions={bulkActions}
           emptyMessage="No products found. Click 'Add Product' to create one."
           height="calc(100vh - 200px)"
           pageSize={10}
           selectable={true}
+          onSelectionChange={setSelectedProducts}
         />
       </div>
 
@@ -530,12 +531,12 @@ export default function AdminProductManagement() {
       >
         <div className="space-y-4">
           <p className="text-gray-700">
-            Are you sure you want to delete <strong>{productsToDelete.length} products</strong>? This action cannot be undone.
+            Are you sure you want to delete <strong>{selectedProducts.length} products</strong>? This action cannot be undone.
           </p>
-          {productsToDelete.length > 0 && (
+          {selectedProducts.length > 0 && (
             <div className="max-h-40 overflow-y-auto">
               <ul className="list-disc list-inside text-sm text-gray-600">
-                {productsToDelete.map((product) => (
+                {selectedProducts.map((product) => (
                   <li key={product.id}>{product.name}</li>
                 ))}
               </ul>
