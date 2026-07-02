@@ -76,6 +76,17 @@ export function Table<T>({
   const paginatedData = data.slice(startIndex, endIndex)
   const showPagination = data.length > pageSize
 
+  // Reset to first page if current page is empty after data changes
+  React.useEffect(() => {
+    ;(async () => {
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages)
+      } else if (currentPage > 1 && startIndex >= data.length) {
+        setCurrentPage(Math.max(1, totalPages))
+      }
+    })()
+  }, [data.length, currentPage, totalPages, startIndex])
+
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1))
   }
