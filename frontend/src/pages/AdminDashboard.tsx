@@ -70,9 +70,12 @@ export default function AdminDashboard() {
             >
               Manage Products
             </Link>
-            <button className="bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors">
-              View Orders
-            </button>
+            <Link
+              to="/admin/categories"
+              className="bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-center"
+            >
+              Manage Categories
+            </Link>
           </div>
         </div>
       </div>

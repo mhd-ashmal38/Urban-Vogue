@@ -10,6 +10,7 @@ import AdminDashboard from './pages/AdminDashboard'
 import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
 import AdminProductManagement from './pages/AdminProductManagement'
+import AdminCategoryManagement from './pages/AdminCategoryManagement'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
@@ -47,6 +48,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <AdminProductManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminCategoryManagement />
               </ProtectedRoute>
             }
           />
