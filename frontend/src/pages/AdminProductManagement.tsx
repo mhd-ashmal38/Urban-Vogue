@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { productsApi, categoriesApi, type Product, type Category } from '../services/products'
-import { Plus, Edit, Trash2, Loader2 } from 'lucide-react'
+import { Plus, Edit, Trash2, Loader2, Search, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -12,7 +12,9 @@ import { Table, type Column, type Action } from '../components/ui/table'
 
 export default function AdminProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -40,6 +42,7 @@ export default function AdminProductManagement() {
     {
       header: 'Product',
       key: 'name',
+      sortable: true,
       render: (_value, product) => (
         <div className="flex items-center">
           {product.images && product.images.length > 0 ? (
@@ -63,6 +66,7 @@ export default function AdminProductManagement() {
     {
       header: 'Category',
       key: 'category',
+      sortable: true,
       render: (_value, product) => (
         <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
           {product.category.name}
@@ -72,16 +76,13 @@ export default function AdminProductManagement() {
     {
       header: 'Price',
       key: 'price',
+      sortable: true,
       render: (value) => `$${Number(value).toFixed(2)}`,
     },
     {
       header: 'Stock',
       key: 'stock',
-    },
-    {
-      header: 'Images',
-      key: 'images',
-      render: (_value, product) => product.images?.length || 0,
+      sortable: true,
     },
   ]
 
@@ -104,11 +105,28 @@ export default function AdminProductManagement() {
     try {
       const data = await productsApi.getAll()
       setProducts(data)
+      setFilteredProducts(data)
     } catch (err) {
       toast.error('Failed to fetch products')
       console.error(err)
     }
   }
+
+  // Filter products based on search term
+  useEffect(() => {
+    ;(async () => {
+      if (searchTerm === '') {
+        setFilteredProducts(products)
+      } else {
+        const filtered = products.filter(
+          (product) =>
+            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        setFilteredProducts(filtered)
+      }
+    })()
+  }, [searchTerm, products])
 
   const fetchCategories = async () => {
     try {
@@ -298,6 +316,34 @@ export default function AdminProductManagement() {
     setBulkDeleteDialogOpen(false)
   }
 
+  const handleExportCSV = () => {
+    const headers = ['Name', 'Category', 'Price', 'Stock', 'Description', 'Created At']
+    const rows = filteredProducts.map((product) => [
+      product.name,
+      product.category.name,
+      product.price.toString(),
+      product.stock.toString(),
+      product.description || '',
+      new Date(product.createdAt).toLocaleDateString(),
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')),
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `products_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('Products exported successfully')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -319,6 +365,14 @@ export default function AdminProductManagement() {
             <p className="text-gray-600 mt-1">Manage your product inventory</p>
           </div>
           <div className="flex gap-3">
+            <Button
+              onClick={handleExportCSV}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Export CSV
+            </Button>
             {selectedProducts.length > 0 && (
               <Button
                 onClick={handleBulkDelete}
@@ -341,9 +395,21 @@ export default function AdminProductManagement() {
 
       {/* Products Table */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="Search products by name or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
         <Table
           columns={columns}
-          data={products}
+          data={filteredProducts}
           actions={actions}
           emptyMessage="No products found. Click 'Add Product' to create one."
           height="calc(100vh - 200px)"

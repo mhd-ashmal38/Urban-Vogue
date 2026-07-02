@@ -1,12 +1,13 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react'
 
 export interface Column<T> {
   header: string
   key: string
   className?: string
   render?: (value: unknown, row: T, index: number) => React.ReactNode
+  sortable?: boolean
 }
 
 export interface Action<T> {
@@ -53,6 +54,8 @@ export function Table<T>({
   const [currentPage, setCurrentPage] = React.useState(1)
   const [selectedRows, setSelectedRows] = React.useState<Set<string>>(new Set())
   const [selectAll, setSelectAll] = React.useState(false)
+  const [sortColumn, setSortColumn] = React.useState<string | null>(null)
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc')
 
   const getRowKey = React.useCallback((row: T, index: number) => {
     if (rowKey) return rowKey(row, index)
@@ -73,8 +76,41 @@ export function Table<T>({
   const totalPages = Math.ceil(data.length / pageSize)
   const startIndex = (currentPage - 1) * pageSize
   const endIndex = startIndex + pageSize
-  const paginatedData = data.slice(startIndex, endIndex)
   const showPagination = data.length > pageSize
+
+  // Sort data
+  const sortedData = React.useMemo(() => {
+    if (!sortColumn) return data
+
+    return [...data].sort((a, b) => {
+      const aValue = (a as Record<string, unknown>)[sortColumn]
+      const bValue = (b as Record<string, unknown>)[sortColumn]
+
+      if (aValue === bValue) return 0
+
+      let comparison: number
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        comparison = aValue.localeCompare(bValue)
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue
+      } else {
+        comparison = String(aValue).localeCompare(String(bValue))
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison
+    })
+  }, [data, sortColumn, sortDirection])
+
+  const paginatedData = sortedData.slice(startIndex, endIndex)
+
+  const handleSort = (columnKey: string) => {
+    if (sortColumn === columnKey) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortColumn(columnKey)
+      setSortDirection('asc')
+    }
+  }
 
   // Reset to first page if current page is empty after data changes
   React.useEffect(() => {
@@ -135,10 +171,27 @@ export function Table<T>({
               key={column.key}
               className={cn(
                 'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
+                column.sortable && 'cursor-pointer hover:bg-gray-100',
                 column.className
               )}
+              onClick={() => column.sortable && handleSort(column.key)}
             >
-              {column.header}
+              <div className="flex items-center gap-1">
+                {column.header}
+                {column.sortable && (
+                  <span className="ml-1">
+                    {sortColumn === column.key ? (
+                      sortDirection === 'asc' ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )
+                    ) : (
+                      <ChevronsUpDown className="w-4 h-4 text-gray-400" />
+                    )}
+                  </span>
+                )}
+              </div>
             </th>
           ))}
           {actions && actions.length > 0 && (
@@ -290,10 +343,27 @@ export function Table<T>({
                     key={column.key}
                     className={cn(
                       'px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
+                      column.sortable && 'cursor-pointer hover:bg-gray-100',
                       column.className
                     )}
+                    onClick={() => column.sortable && handleSort(column.key)}
                   >
-                    {column.header}
+                    <div className="flex items-center gap-1">
+                      {column.header}
+                      {column.sortable && (
+                        <span className="ml-1">
+                          {sortColumn === column.key ? (
+                            sortDirection === 'asc' ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4" />
+                            )
+                          ) : (
+                            <ChevronsUpDown className="w-4 h-4 text-gray-400" />
+                          )}
+                        </span>
+                      )}
+                    </div>
                   </th>
                 ))}
                 {actions && actions.length > 0 && (

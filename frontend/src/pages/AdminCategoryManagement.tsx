@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { categoriesApi, type Category } from '../services/products'
-import { Plus, Edit, Trash2, Loader2 } from 'lucide-react'
+import { Plus, Edit, Trash2, Loader2, Search, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -10,7 +10,9 @@ import { Table, type Column, type Action } from '../components/ui/table'
 
 export default function AdminCategoryManagement() {
   const [categories, setCategories] = useState<Category[]>([])
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([])
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([])
+  const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
@@ -29,11 +31,13 @@ export default function AdminCategoryManagement() {
     {
       header: 'Name',
       key: 'name',
+      sortable: true,
       render: (value: string) => <span className="font-medium text-gray-900">{value}</span>,
     },
     {
       header: 'Description',
       key: 'description',
+      sortable: true,
       render: (value: string | null) => (
         <span className="text-sm text-gray-500 max-w-xs truncate">{value || '-'}</span>
       ),
@@ -41,6 +45,7 @@ export default function AdminCategoryManagement() {
     {
       header: 'Created',
       key: 'createdAt',
+      sortable: true,
       render: (value: string) => (
         <span className="text-sm text-gray-500">
           {new Date(value).toLocaleDateString()}
@@ -68,6 +73,7 @@ export default function AdminCategoryManagement() {
     try {
       const data = await categoriesApi.getAll()
       setCategories(data)
+      setFilteredCategories(data)
     } catch (err) {
       toast.error('Failed to fetch categories')
       console.error(err)
@@ -75,6 +81,22 @@ export default function AdminCategoryManagement() {
       setLoading(false)
     }
   }
+
+  // Filter categories based on search term
+  useEffect(() => {
+    ;(async () => {
+      if (searchTerm === '') {
+        setFilteredCategories(categories)
+      } else {
+        const filtered = categories.filter(
+          (category) =>
+            category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            category.description?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+        setFilteredCategories(filtered)
+      }
+    })()
+  }, [searchTerm, categories])
 
   useEffect(() => {
     ;(async () => {
@@ -193,6 +215,31 @@ export default function AdminCategoryManagement() {
     setBulkDeleteDialogOpen(false)
   }
 
+  const handleExportCSV = () => {
+    const headers = ['Name', 'Description', 'Created At']
+    const rows = filteredCategories.map((category) => [
+      category.name,
+      category.description || '',
+      new Date(category.createdAt).toLocaleDateString(),
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')),
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `categories_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    toast.success('Categories exported successfully')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -214,6 +261,14 @@ export default function AdminCategoryManagement() {
             <p className="text-gray-600 mt-1">Manage your product categories</p>
           </div>
           <div className="flex gap-3">
+            <Button
+              onClick={handleExportCSV}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Export CSV
+            </Button>
             {selectedCategories.length > 0 && (
               <Button
                 onClick={handleBulkDelete}
@@ -236,9 +291,21 @@ export default function AdminCategoryManagement() {
 
       {/* Categories Table */}
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="Search categories by name or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
         <Table
           columns={columns}
-          data={categories}
+          data={filteredCategories}
           actions={actions}
           emptyMessage="No categories found. Click 'Add Category' to create one."
           height="calc(100vh - 200px)"
