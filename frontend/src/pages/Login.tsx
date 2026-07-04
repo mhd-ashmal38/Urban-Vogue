@@ -4,6 +4,7 @@ import { Mail, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { authApi } from '../services/auth'
 import { useAuthStore } from '../store/authStore'
+import { useCartStore } from '../store/cartStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
@@ -13,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 export default function Login() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
+  const mergeGuestCart = useCartStore((state) => state.mergeGuestCart)
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -54,6 +56,12 @@ export default function Login() {
       setAuth(response.user, response.accessToken, response.refreshToken)
       toast.success('Login successful!')
 
+      // Merge guest cart with user cart
+      const guestCart = useCartStore.getState()
+      if (guestCart.items.length > 0) {
+        await mergeGuestCart(guestCart.items)
+      }
+
       // Redirect based on role
       if (response.user.role === 'ADMIN') {
         navigate('/admin/dashboard')
@@ -70,7 +78,7 @@ export default function Login() {
   }
 
   return (
-    <div className="h-full w-full flex items-center justify-center p-4">
+    <div className="min-h-screen w-full flex items-center justify-center p-4">
       <Card className="max-w-md w-[90%] max-h-[90vh] shadow-xl">
         <CardHeader className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-t-xl">
           <CardTitle className="text-3xl font-bold text-center text-white">Welcome Back</CardTitle>

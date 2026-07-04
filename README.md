@@ -1,6 +1,6 @@
 # Urban Vogue
 
-A modern e-commerce application built with NestJS (backend) and React (frontend), featuring authentication, refresh tokens, and role-based access control (RBAC).
+A modern e-commerce application built with NestJS (backend) and React (frontend).
 
 ## Tech Stack
 
@@ -141,11 +141,48 @@ FRONTEND_URL="http://localhost:5173"
 - Secure logout (invalidates refresh token)
 
 ### Role-Based Access Control (RBAC)
-- **USER role**: Can browse, add to cart, checkout, view own profile
+- **USER role**: Can browse, add to cart, checkout, view own profile, view orders
 - **ADMIN role**: Full access to admin dashboard and management features
 - Role-based routing (admin users redirected to admin dashboard)
 - Protected routes and API endpoints
 - Backend guard enforcement
+
+### Product Management
+- Product browsing with search and category filtering
+- Product detail pages with images and descriptions
+- Admin product management (CRUD operations)
+- Image upload for products
+- Category management
+- Stock tracking
+
+### Cart System
+- **User-specific cart** - Cart data stored in backend linked to user ID
+- Add/remove items from cart
+- Update item quantities
+- Product variant support (size, color)
+- Real-time cart total calculation
+- Cart persistence across sessions (backend-driven)
+- Guest cart merge on login
+
+### Order Management
+- **Checkout flow** with shipping address form
+- Order creation from cart
+- Order confirmation page
+- **User order history** with status tracking
+- **Order details page** with full information
+- **Admin order management** with status updates
+- Order status workflow: PENDING → PROCESSING → SHIPPED → DELIVERED/CANCELLED
+- Color-coded status badges
+- Real-time order status updates
+- Order total calculation
+- Cart auto-clear after successful order
+
+### Admin Dashboard
+- Overview statistics (users, orders, revenue)
+- User management (view, update roles, delete)
+- Product management (create, update, delete, upload images)
+- Category management (create, update, delete)
+- Order management (view all orders, update status)
 
 ### Security
 - Password hashing with bcrypt
@@ -210,6 +247,7 @@ Urban-Vogue/
 
 - **[RBAC Guide](./RBAC_GUIDE.md)** - Complete guide to Role-Based Access Control implementation
 - **[Refresh Token Guide](./REFRESH_TOKEN_GUIDE.md)** - Complete guide to refresh token functionality
+- **[Order Management Guide](./ORDER_MANAGEMENT_GUIDE.md)** - Complete guide to order management system
 
 ## Development
 

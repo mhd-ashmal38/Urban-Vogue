@@ -40,12 +40,12 @@ export default function ProductDetail() {
     fetchProduct()
   }, [id])
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return
 
     // Check if variant selection is required
     const hasVariants = (product.sizes && product.sizes.length > 0) || (product.colors && product.colors.length > 0)
-    
+
     if (hasVariants) {
       if (product.sizes && product.sizes.length > 0 && !selectedSize) {
         toast.error('Please select a size')
@@ -66,8 +66,8 @@ export default function ProductDetail() {
       color: selectedColor,
       image: product.images?.[0],
     }
-    
-    addItem(cartItem)
+
+    await addItem(cartItem)
     toast.success(`Added ${quantity} ${product.name}(s) to cart${selectedSize ? ` (${selectedSize})` : ''}${selectedColor ? ` (${selectedColor})` : ''}`)
   }
 
