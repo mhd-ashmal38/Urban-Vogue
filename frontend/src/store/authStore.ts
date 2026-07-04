@@ -43,8 +43,10 @@ export const useAuthStore = create<AuthStore>()(
           refreshToken,
           isAuthenticated: true,
         })
-        // Fetch user's cart from backend
-        useCartStore.getState().fetchCart()
+        // Fetch user's cart from backend (only for non-admin users)
+        if (user.role !== 'ADMIN') {
+          useCartStore.getState().fetchCart()
+        }
       },
 
       // Update tokens only (called after token refresh)

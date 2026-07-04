@@ -15,7 +15,6 @@ export default function Login() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
   const mergeGuestCart = useCartStore((state) => state.mergeGuestCart)
-  const fetchCart = useCartStore((state) => state.fetchCart)
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -61,8 +60,6 @@ export default function Login() {
       const guestCart = useCartStore.getState()
       if (guestCart.items.length > 0) {
         await mergeGuestCart(guestCart.items)
-      } else {
-        await fetchCart()
       }
 
       // Redirect based on role
