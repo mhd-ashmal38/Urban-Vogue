@@ -17,6 +17,7 @@ import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
 import Orders from './pages/Orders'
 import OrderDetails from './pages/OrderDetails'
+import AdminOrderDetails from './pages/AdminOrderDetails'
 import AdminOrders from './pages/AdminOrders'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
@@ -119,7 +120,7 @@ function App() {
             path="/admin/orders/:id"
             element={
               <ProtectedRoute requiredRole="ADMIN">
-                <OrderDetails />
+                <AdminOrderDetails />
               </ProtectedRoute>
             }
           />
