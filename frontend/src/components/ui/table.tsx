@@ -195,7 +195,7 @@ export function Table<T>({
             </th>
           ))}
           {actions && actions.length > 0 && (
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
           )}
@@ -238,8 +238,8 @@ export function Table<T>({
                 </td>
               ))}
               {actions && actions.length > 0 && (
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex justify-end gap-2">
+                <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                  <div className="flex justify-center gap-2">
                     {actions.map((action, actionIndex) => (
                       <button
                         key={actionIndex}
@@ -367,7 +367,7 @@ export function Table<T>({
                   </th>
                 ))}
                 {actions && actions.length > 0 && (
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 )}
@@ -410,8 +410,8 @@ export function Table<T>({
                       </td>
                     ))}
                     {actions && actions.length > 0 && (
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
+                      <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
+                        <div className="flex justify-center gap-2">
                           {actions.map((action, actionIndex) => (
                             <button
                               key={actionIndex}

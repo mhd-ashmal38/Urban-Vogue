@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Package, Calendar, DollarSign, User, Eye } from 'lucide-react'
 import { orderApi, type Order } from '../services/orders'
-import { Button } from '../components/ui/button'
-import { Card, CardContent } from '../components/ui/card'
-import { Select } from '../components/ui/select'
+import { Table, type Column, type Action } from '../components/ui/table'
 import AdminLayout from '../components/AdminLayout'
-import SkeletonCard from '../components/ui/skeleton-card'
+import SkeletonTable from '../components/ui/skeleton-table'
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -27,6 +24,121 @@ const statusOptions = [
 export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null)
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null)
+
+  const columns: Column<Order>[] = [
+    {
+      header: 'Order ID',
+      key: 'id',
+      sortable: true,
+      render: (value: string) => <span className="font-mono text-sm">#{value.slice(0, 8)}</span>,
+    },
+    {
+      header: 'Customer',
+      key: 'user',
+      sortable: true,
+      render: (value: any) => (
+        <div className="flex items-center gap-2">
+          <User className="w-4 h-4 text-gray-400" />
+          <span className="text-sm">{value?.name || value?.email || 'N/A'}</span>
+        </div>
+      ),
+    },
+    {
+      header: 'Date',
+      key: 'createdAt',
+      sortable: true,
+      render: (value: string) => (
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <Calendar className="w-4 h-4" />
+          {new Date(value).toLocaleDateString()}
+        </div>
+      ),
+    },
+    {
+      header: 'Items',
+      key: 'items',
+      sortable: true,
+      render: (value: any[]) => (
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <Package className="w-4 h-4" />
+          {value.length} item{value.length !== 1 ? 's' : ''}
+        </div>
+      ),
+    },
+    {
+      header: 'Total',
+      key: 'total',
+      sortable: true,
+      render: (value: any) => (
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <DollarSign className="w-4 h-4" />
+          ${Number(value).toFixed(2)}
+        </div>
+      ),
+    },
+    {
+      header: 'Status',
+      key: 'status',
+      sortable: true,
+      render: (value: string, row: Order) => {
+        const isOpen = openDropdown === row.id
+        
+        const handleBadgeClick = (e: React.MouseEvent<HTMLSpanElement>) => {
+          const rect = e.currentTarget.getBoundingClientRect()
+          setDropdownPosition({
+            top: rect.bottom + 4,
+            left: rect.left,
+          })
+          setOpenDropdown(isOpen ? null : row.id)
+        }
+        
+        return (
+          <>
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-medium cursor-pointer ${statusColors[value] || 'bg-gray-100 text-gray-800'}`}
+              onClick={handleBadgeClick}
+            >
+              {value}
+            </span>
+            
+            {isOpen && dropdownPosition && (
+              <div 
+                className="fixed bg-white border border-gray-200 rounded-lg shadow-lg z-[9999] min-w-[140px] overflow-hidden"
+                style={{ top: dropdownPosition.top, left: dropdownPosition.left }}
+              >
+                {statusOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 block whitespace-nowrap ${
+                      option.value === value ? 'bg-gray-50 font-medium' : ''
+                    }`}
+                    onClick={() => {
+                      handleStatusChange(row.id, option.value)
+                      setOpenDropdown(null)
+                      setDropdownPosition(null)
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )
+      },
+    },
+  ]
+
+  const actions: Action<Order>[] = [
+    {
+      label: 'View',
+      icon: <Eye className="w-4 h-4" />,
+      onClick: (order) => window.location.href = `/admin/orders/${order.id}`,
+      className: 'px-3 py-1.5 rounded-md border border-gray-200 text-sm font-medium transition-colors hover:bg-gray-50 hover:text-gray-700',
+    },
+  ]
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -45,10 +157,12 @@ export default function AdminOrders() {
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
-      const updatedOrder = await orderApi.updateOrderStatus(orderId, {
+      await orderApi.updateOrderStatus(orderId, {
         status: newStatus as 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
       })
-      setOrders(orders.map((order) => (order.id === orderId ? updatedOrder : order)))
+      setOrders(orders.map((order) => 
+        order.id === orderId ? { ...order, status: newStatus as any } : order
+      ))
     } catch (error) {
       console.error('Failed to update order status:', error)
     }
@@ -57,11 +171,7 @@ export default function AdminOrders() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <SkeletonCard key={i} showImage={false} showTitle showDescription showFooter />
-          ))}
-        </div>
+        <SkeletonTable rows={10} columns={6} showCheckbox={false} showActions />
       </AdminLayout>
     )
   }
@@ -85,89 +195,15 @@ export default function AdminOrders() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Manage Orders</h1>
 
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <Card key={order.id}>
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-start gap-6">
-                  {/* Order Info */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-3">
-                      <h3 className="font-semibold text-lg">
-                        Order #{order.id.slice(0, 8)}
-                      </h3>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          statusColors[order.status] || 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </div>
-
-                    {/* Customer Info */}
-                    {order.user && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                        <User className="w-4 h-4" />
-                        <span>{order.user.name || order.user.email}</span>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Package className="w-4 h-4" />
-                        {order.items.length} item{order.items.length !== 1 ? 's' : ''}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-4 h-4" />
-                        ${Number(order.total).toFixed(2)}
-                      </div>
-                    </div>
-
-                    {/* Items Preview */}
-                    <div className="text-sm text-gray-600">
-                      {order.items.slice(0, 2).map((item) => (
-                        <span key={item.id}>
-                          {item.product.name} x{item.quantity}
-                          {item !== order.items[order.items.length - 1] && ', '}
-                        </span>
-                      ))}
-                      {order.items.length > 2 && (
-                        <span> +{order.items.length - 2} more</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-col gap-3 lg:w-64">
-                    {/* Status Dropdown */}
-                    <Select
-                      label="Update Status"
-                      options={statusOptions}
-                      value={order.status}
-                      onChange={(value) => handleStatusChange(order.id, value)}
-                    />
-
-                    {/* View Details Button */}
-                    <Link to={`/orders/${order.id}`}>
-                      <Button
-                        variant="outline"
-                        className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
-                      >
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Details
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Table
+          columns={columns}
+          data={orders}
+          actions={actions}
+          emptyMessage="No orders found. Orders will appear here when customers make purchases."
+          height="calc(100vh - 200px)"
+          pageSize={10}
+          selectable={false}
+        />
       </div>
     </AdminLayout>
   )

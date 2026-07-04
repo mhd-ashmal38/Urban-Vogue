@@ -115,6 +115,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/admin/orders/:id"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <OrderDetails />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
         <Toaster 
           position="top-right"
