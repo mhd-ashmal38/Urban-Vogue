@@ -1,4 +1,5 @@
 import { IsEmail, IsString, IsOptional, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 /**
  * CreateUserDto - Defines the structure for creating a new user
@@ -15,13 +16,16 @@ import { IsEmail, IsString, IsOptional, MinLength } from 'class-validator';
  * - @MinLength(6) - String must be at least 6 characters
  */
 export class CreateUserDto {
+  @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   email: string;
 
+  @ApiProperty({ example: 'password123' })
   @IsString()
   @MinLength(6)
   password: string;
 
+  @ApiProperty({ example: 'John Doe', required: false })
   @IsString()
   @IsOptional()
   name?: string;
