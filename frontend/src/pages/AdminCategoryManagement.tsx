@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label'
 import { Dialog } from '../components/ui/dialog'
 import { Table, type Column, type Action } from '../components/ui/table'
 import AdminLayout from '../components/AdminLayout'
+import SkeletonTable from '../components/ui/skeleton-table'
 
 export default function AdminCategoryManagement() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -244,12 +245,7 @@ export default function AdminCategoryManagement() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Loading categories...</p>
-          </div>
-        </div>
+        <SkeletonTable rows={10} columns={3} showCheckbox showActions />
       </AdminLayout>
     )
   }

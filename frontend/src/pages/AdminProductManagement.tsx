@@ -10,6 +10,7 @@ import { Select } from '../components/ui/select'
 import { FileUpload } from '../components/ui/file-upload'
 import { Table, type Column, type Action } from '../components/ui/table'
 import AdminLayout from '../components/AdminLayout'
+import SkeletonTable from '../components/ui/skeleton-table'
 
 export default function AdminProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
@@ -401,12 +402,7 @@ export default function AdminProductManagement() {
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
-            <p className="mt-4 text-gray-600">Loading products...</p>
-          </div>
-        </div>
+        <SkeletonTable rows={10} columns={5} showCheckbox showActions />
       </AdminLayout>
     )
   }
