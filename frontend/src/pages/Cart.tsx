@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react'
 import { useCartStore } from '../store/cartStore'
@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/authStore'
 import { Button } from '../components/ui/button'
 
 export default function Cart() {
+  const navigate = useNavigate()
   const { items, removeItem, updateQuantity, getTotalPrice, getTotalItems, clearCart, fetchCart } = useCartStore()
   const { isAuthenticated } = useAuthStore()
 
@@ -138,7 +139,16 @@ export default function Cart() {
                 </div>
               </div>
 
-              <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 mb-3">
+              <Button
+                onClick={() => {
+                  if (isAuthenticated) {
+                    navigate('/checkout')
+                  } else {
+                    navigate('/login')
+                  }
+                }}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 mb-3"
+              >
                 <ArrowRight className="w-5 h-5" />
                 Proceed to Checkout
               </Button>

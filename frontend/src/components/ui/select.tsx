@@ -1,4 +1,5 @@
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { ChevronDown, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -25,12 +26,31 @@ export function Select({
 }: SelectProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const dropdownRef = React.useRef<HTMLDivElement>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+  const [dropdownPos, setDropdownPos] = React.useState<{
+    top: number
+    left: number
+    width: number
+  } | null>(null)
+
+  const updatePosition = React.useCallback(() => {
+    const trigger = triggerRef.current
+    if (!trigger) return
+    const rect = trigger.getBoundingClientRect()
+    setDropdownPos({
+      top: rect.bottom,
+      left: rect.left,
+      width: rect.width,
+    })
+  }, [])
 
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
+        !dropdownRef.current.contains(event.target as Node) &&
+        !triggerRef.current?.contains(event.target as Node)
       ) {
         setIsOpen(false)
       }
@@ -40,10 +60,23 @@ export function Select({
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
+  React.useEffect(() => {
+    if (!isOpen) return
+    updatePosition()
+    const onScroll = () => updatePosition()
+    const onResize = () => updatePosition()
+    window.addEventListener("scroll", onScroll, true)
+    window.addEventListener("resize", onResize)
+    return () => {
+      window.removeEventListener("scroll", onScroll, true)
+      window.removeEventListener("resize", onResize)
+    }
+  }, [isOpen, updatePosition])
+
   const selectedOption = options.find((opt) => opt.value === value)
 
   return (
-    <div className="w-full" ref={dropdownRef}>
+    <div className="w-full" ref={containerRef}>
       {label && (
         <label className="block text-sm font-medium text-gray-700 mb-1">
           {label}
@@ -53,8 +86,12 @@ export function Select({
         {/* Trigger Button */}
         <button
           type="button"
-          onClick={() => !disabled && setIsOpen(!isOpen)}
+          onClick={() => {
+            if (disabled) return
+            setIsOpen((prev) => !prev)
+          }}
           disabled={disabled}
+          ref={triggerRef}
           className={cn(
             "w-full px-3 py-2.5 border rounded-lg bg-white text-left",
             "focus:ring-2 focus:ring-blue-500 focus:border-transparent",
@@ -74,43 +111,55 @@ export function Select({
           </span>
           <ChevronDown
             className={cn(
-              "w-4 h-4 text-gray-400 transition-transform flex-shrink-0",
+              "w-4 h-4 text-gray-400 transition-transform shrink-0",
               isOpen && "rotate-180"
             )}
           />
         </button>
 
-        {/* Dropdown */}
-        {isOpen && (
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-            {options.length === 0 ? (
-              <div className="px-3 py-2 text-gray-500 text-sm">
-                No options available
-              </div>
-            ) : (
-              options.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(option.value)
-                    setIsOpen(false)
-                  }}
-                  className={cn(
-                    "w-full px-3 py-2 text-left text-sm transition-colors",
-                    "flex items-center justify-between gap-2",
-                    "hover:bg-gray-100",
-                    value === option.value ? "bg-gray-100 text-gray-900" : "text-gray-900"
-                  )}
-                >
-                  <span>{option.label}</span>
-                  {value === option.value && (
-                    <Check className="w-4 h-4 flex-shrink-0" />
-                  )}
-                </button>
-              ))
-            )}
-          </div>
+        {/* Dropdown (rendered in portal to avoid clipping by parent overflow) */}
+        {isOpen && dropdownPos && createPortal(
+          (
+            <div
+              ref={dropdownRef}
+              style={{
+                position: "fixed",
+                top: dropdownPos.top,
+                left: dropdownPos.left,
+                width: dropdownPos.width,
+              }}
+              className="z-[9999] bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+            >
+              {options.length === 0 ? (
+                <div className="px-3 py-2 text-gray-500 text-sm">
+                  No options available
+                </div>
+              ) : (
+                options.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(option.value)
+                      setIsOpen(false)
+                    }}
+                    className={cn(
+                      "w-full px-3 py-2 text-left text-sm transition-colors",
+                      "flex items-center justify-between gap-2",
+                      "hover:bg-gray-100",
+                      value === option.value ? "bg-gray-100 text-gray-900" : "text-gray-900"
+                    )}
+                  >
+                    <span>{option.label}</span>
+                    {value === option.value && (
+                      <Check className="w-4 h-4 shrink-0" />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          ),
+          document.body
         )}
       </div>
       {error && (

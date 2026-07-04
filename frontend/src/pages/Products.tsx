@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { productsApi, categoriesApi } from '../services/products'
 import type { Product, Category } from '../services/products'
-import { Search, Filter, ShoppingCart } from 'lucide-react'
+import { Search, Filter, ShoppingCart, Package } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Select } from '../components/ui/select'
 import { useCartStore } from '../store/cartStore'
@@ -78,17 +78,27 @@ export default function Products() {
             <h1 className="text-3xl font-bold text-gray-900">Products</h1>
             <p className="text-gray-600 mt-1">Browse our collection</p>
           </div>
-          <Link
-            to="/cart"
-            className="relative bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full transition-colors"
-          >
-            <ShoppingCart className="w-6 h-6" />
-            {getTotalItems() > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {getTotalItems()}
-              </span>
-            )}
-          </Link>
+          <div className="flex gap-3">
+            <Link
+              to="/orders"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-full transition-colors"
+              title="My Orders"
+            >
+              <Package className="w-6 h-6" />
+            </Link>
+            <Link
+              to="/cart"
+              className="relative bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full transition-colors"
+              title="Cart"
+            >
+              <ShoppingCart className="w-6 h-6" />
+              {getTotalItems() > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {getTotalItems()}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -13,13 +13,18 @@ import Cart from './pages/Cart'
 import AdminProductManagement from './pages/AdminProductManagement'
 import AdminCategoryManagement from './pages/AdminCategoryManagement'
 import AdminUserManagement from './pages/AdminUserManagement'
+import Checkout from './pages/Checkout'
+import OrderConfirmation from './pages/OrderConfirmation'
+import Orders from './pages/Orders'
+import OrderDetails from './pages/OrderDetails'
+import AdminOrders from './pages/AdminOrders'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
 function App() {
   return (
     <BrowserRouter>
-      <div className="h-screen w-screen overflow-hidden">
+      <div className="min-h-screen w-screen overflow-x-hidden">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
@@ -67,6 +72,46 @@ function App() {
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <AdminUserManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <ProtectedRoute>
+                <Checkout />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/order-confirmation/:id"
+            element={
+              <ProtectedRoute>
+                <OrderConfirmation />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <ProtectedRoute>
+                <Orders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <ProtectedRoute>
+                <OrderDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/orders"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminOrders />
               </ProtectedRoute>
             }
           />

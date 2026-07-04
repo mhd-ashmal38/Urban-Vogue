@@ -4,6 +4,7 @@ export interface User {
   id: string;
   name: string | null;
   email: string;
+  role: 'USER' | 'ADMIN';
   isActive: boolean;
   resetToken: string | null;
   resetTokenExpiry: Date | null;

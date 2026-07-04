@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { User, LogOut, AlertCircle, Loader2 } from 'lucide-react'
+import { User, LogOut, AlertCircle, Loader2, Package } from 'lucide-react'
 import { authApi } from '../services/auth'
 import { useAuthStore } from '../store/authStore'
 
@@ -123,9 +123,17 @@ export default function Profile() {
           </div>
         )}
 
+        <Link
+          to="/orders"
+          className="w-full mt-6 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center"
+        >
+          <Package className="w-5 h-5 mr-2" />
+          My Orders
+        </Link>
+
         <button
           onClick={handleLogout}
-          className="w-full mt-8 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
+          className="w-full mt-4 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors flex items-center justify-center"
         >
           <LogOut className="w-5 h-5 mr-2" />
           Logout

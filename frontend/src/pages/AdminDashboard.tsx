@@ -60,7 +60,7 @@ export default function AdminDashboard() {
 
         <div className="mt-8 bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Admin Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Link
               to="/admin/users"
               className="bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors text-center"
@@ -78,6 +78,12 @@ export default function AdminDashboard() {
               className="bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-center"
             >
               Manage Categories
+            </Link>
+            <Link
+              to="/admin/orders"
+              className="bg-orange-500 text-white py-3 px-4 rounded-lg hover:bg-orange-600 transition-colors text-center"
+            >
+              Manage Orders
             </Link>
           </div>
         </div>
