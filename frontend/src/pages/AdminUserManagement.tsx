@@ -8,6 +8,7 @@ import { Label } from '../components/ui/label'
 import { Dialog } from '../components/ui/dialog'
 import { Select } from '../components/ui/select'
 import { Table, type Column, type Action } from '../components/ui/table'
+import AdminLayout from '../components/AdminLayout'
 
 export default function AdminUserManagement() {
   const [users, setUsers] = useState<User[]>([])
@@ -269,229 +270,233 @@ export default function AdminUserManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading users...</p>
+      <AdminLayout>
+        <div className="flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
+            <p className="mt-4 text-gray-600">Loading users...</p>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-            <p className="text-gray-600 mt-1">Manage user accounts and permissions</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={handleExportCSV}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-            >
-              <Download className="w-5 h-5" />
-              Export CSV
-            </Button>
-            {selectedUsers.length > 0 && (
+    <AdminLayout>
+      <>
+        <div>
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+              <p className="text-gray-600 mt-1">Manage user accounts and permissions</p>
+            </div>
+            <div className="flex gap-3">
               <Button
-                onClick={handleBulkDelete}
-                className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                onClick={handleExportCSV}
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
-                <Trash2 className="w-5 h-5" />
-                Delete Selected ({selectedUsers.length})
+                <Download className="w-5 h-5" />
+                Export CSV
               </Button>
+              {selectedUsers.length > 0 && (
+                <Button
+                  onClick={handleBulkDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  Delete Selected ({selectedUsers.length})
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Search users by name or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Users Table */}
+          <Table
+            columns={columns}
+            data={filteredUsers}
+            actions={actions}
+            emptyMessage="No users found."
+            height="calc(100vh - 300px)"
+            pageSize={10}
+            selectable={true}
+            onSelectionChange={setSelectedUsers}
+          />
+        </div>
+
+        {/* Edit User Modal */}
+        <Dialog
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          title="Edit User"
+          size="sm"
+          footer={
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                onClick={closeModal}
+                variant="outline"
+                className="border-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+                onClick={handleSubmit}
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                ) : null}
+                Update User
+              </Button>
+            </div>
+          }
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter user name"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="email">Email *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Enter email address"
+                required
+              />
+            </div>
+
+            <div>
+              <Select
+                label="Role"
+                value={formData.role}
+                onChange={(value) =>
+                  setFormData({ ...formData, role: value as 'USER' | 'ADMIN' })
+                }
+                options={[
+                  { value: 'USER', label: 'User' },
+                  { value: 'ADMIN', label: 'Admin' },
+                ]}
+                placeholder="Select role"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="isActive"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+              />
+              <Label htmlFor="isActive" className="cursor-pointer">
+                Active Account
+              </Label>
+            </div>
+          </form>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          isOpen={deleteDialogOpen}
+          onClose={closeDeleteDialog}
+          title="Delete User"
+          size="sm"
+          footer={
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                onClick={closeDeleteDialog}
+                variant="outline"
+                className="border-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              Are you sure you want to delete <strong>"{userToDelete?.name || userToDelete?.email}"</strong>? This action cannot be undone.
+            </p>
+          </div>
+        </Dialog>
+
+        {/* Bulk Delete Confirmation Dialog */}
+        <Dialog
+          isOpen={bulkDeleteDialogOpen}
+          onClose={closeBulkDeleteDialog}
+          title="Delete Multiple Users"
+          size="sm"
+          footer={
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                onClick={closeBulkDeleteDialog}
+                variant="outline"
+                className="border-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={confirmBulkDelete}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Delete
+              </Button>
+            </div>
+          }
+        >
+          <div className="space-y-4">
+            <p className="text-gray-700">
+              Are you sure you want to delete <strong>{selectedUsers.length} users</strong>? This action cannot be undone.
+            </p>
+            {selectedUsers.length > 0 && (
+              <div className="max-h-40 overflow-y-auto">
+                <ul className="list-disc list-inside text-sm text-gray-600">
+                  {selectedUsers.map((user) => (
+                    <li key={user.id}>{user.name || user.email}</li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Users Table */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder="Search users by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-        <Table
-          columns={columns}
-          data={filteredUsers}
-          actions={actions}
-          emptyMessage="No users found."
-          height="calc(100vh - 200px)"
-          pageSize={10}
-          selectable={true}
-          onSelectionChange={setSelectedUsers}
-        />
-      </div>
-
-      {/* Edit User Modal */}
-      <Dialog
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title="Edit User"
-        size="sm"
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              onClick={closeModal}
-              variant="outline"
-              className="border-gray-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              disabled={isSubmitting}
-              className="bg-purple-600 hover:bg-purple-700 text-white"
-              onClick={handleSubmit}
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}
-              Update User
-            </Button>
-          </div>
-        }
-      >
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Enter user name"
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="Enter email address"
-              required
-            />
-          </div>
-
-          <div>
-            <Select
-              label="Role"
-              value={formData.role}
-              onChange={(value) =>
-                setFormData({ ...formData, role: value as 'USER' | 'ADMIN' })
-              }
-              options={[
-                { value: 'USER', label: 'User' },
-                { value: 'ADMIN', label: 'Admin' },
-              ]}
-              placeholder="Select role"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="isActive"
-              checked={formData.isActive}
-              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
-            />
-            <Label htmlFor="isActive" className="cursor-pointer">
-              Active Account
-            </Label>
-          </div>
-        </form>
-      </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        isOpen={deleteDialogOpen}
-        onClose={closeDeleteDialog}
-        title="Delete User"
-        size="sm"
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              onClick={closeDeleteDialog}
-              variant="outline"
-              className="border-gray-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={confirmDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Delete
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            Are you sure you want to delete <strong>"{userToDelete?.name || userToDelete?.email}"</strong>? This action cannot be undone.
-          </p>
-        </div>
-      </Dialog>
-
-      {/* Bulk Delete Confirmation Dialog */}
-      <Dialog
-        isOpen={bulkDeleteDialogOpen}
-        onClose={closeBulkDeleteDialog}
-        title="Delete Multiple Users"
-        size="sm"
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              onClick={closeBulkDeleteDialog}
-              variant="outline"
-              className="border-gray-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={confirmBulkDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Delete
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            Are you sure you want to delete <strong>{selectedUsers.length} users</strong>? This action cannot be undone.
-          </p>
-          {selectedUsers.length > 0 && (
-            <div className="max-h-40 overflow-y-auto">
-              <ul className="list-disc list-inside text-sm text-gray-600">
-                {selectedUsers.map((user) => (
-                  <li key={user.id}>{user.name || user.email}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </Dialog>
-    </div>
+        </Dialog>
+      </>
+    </AdminLayout>
   )
 }
