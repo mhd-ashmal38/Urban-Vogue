@@ -52,7 +52,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="h-full w-full flex items-center justify-center p-4">
+    <div className="min-h-screen w-full flex items-center justify-center p-4">
       <Card className="max-w-md w-[90%] max-h-[90vh] shadow-xl">
         <CardHeader className="bg-linear-to-r from-blue-600 to-indigo-600 rounded-t-xl">
           <CardTitle className="text-3xl font-bold text-center text-white">Forgot Password</CardTitle>
