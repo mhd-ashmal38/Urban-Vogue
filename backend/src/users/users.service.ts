@@ -151,4 +151,23 @@ export class UsersService {
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
+
+  /**
+   * Delete multiple users at once
+   * @param ids - Array of user UUIDs to delete
+   * @returns Count of deleted users
+   */
+  async bulkRemove(ids: string[]) {
+    const result = await this.prisma.user.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+      },
+    });
+
+    return {
+      count: result.count,
+    };
+  }
 }

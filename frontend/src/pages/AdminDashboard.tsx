@@ -61,9 +61,12 @@ export default function AdminDashboard() {
         <div className="mt-8 bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Admin Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+            <Link
+              to="/admin/users"
+              className="bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors text-center"
+            >
               Manage Users
-            </button>
+            </Link>
             <Link
               to="/admin/products"
               className="bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition-colors text-center"

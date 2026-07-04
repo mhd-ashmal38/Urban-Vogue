@@ -12,6 +12,7 @@ import ProductDetail from './pages/ProductDetail'
 import Cart from './pages/Cart'
 import AdminProductManagement from './pages/AdminProductManagement'
 import AdminCategoryManagement from './pages/AdminCategoryManagement'
+import AdminUserManagement from './pages/AdminUserManagement'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
@@ -58,6 +59,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <AdminCategoryManagement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AdminUserManagement />
               </ProtectedRoute>
             }
           />

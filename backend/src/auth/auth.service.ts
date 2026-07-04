@@ -98,6 +98,13 @@ export class AuthService {
     // Find user by email
     const user = await this.usersService.findByEmail(loginDto.email);
 
+    // Check if user is active
+    if (!user.isActive) {
+      throw new UnauthorizedException(
+        'Account is inactive. Please contact an administrator.',
+      );
+    }
+
     // Compare password hash
     const isPasswordValid = await bcrypt.compare(
       loginDto.password,
