@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { productsApi, categoriesApi } from '../services/products'
 import type { Product, Category } from '../services/products'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, ShoppingCart } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Select } from '../components/ui/select'
+import { useCartStore } from '../store/cartStore'
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
@@ -12,6 +13,7 @@ export default function Products() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const getTotalItems = useCartStore((state) => state.getTotalItems)
 
   // Fetch categories on mount
   useEffect(() => {
@@ -71,9 +73,22 @@ export default function Products() {
     <div className="h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white shadow-sm flex-shrink-0">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-600 mt-1">Browse our collection</p>
+        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Products</h1>
+            <p className="text-gray-600 mt-1">Browse our collection</p>
+          </div>
+          <Link
+            to="/cart"
+            className="relative bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-full transition-colors"
+          >
+            <ShoppingCart className="w-6 h-6" />
+            {getTotalItems() > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {getTotalItems()}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
 

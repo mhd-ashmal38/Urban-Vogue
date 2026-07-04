@@ -5,10 +5,12 @@ import { productsApi } from '../services/products'
 import type { Product } from '../services/products'
 import { Button } from '../components/ui/button'
 import { toast } from 'sonner'
+import { useCartStore } from '../store/cartStore'
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const addItem = useCartStore((state) => state.addItem)
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -41,8 +43,32 @@ export default function ProductDetail() {
   const handleAddToCart = () => {
     if (!product) return
 
-    // TODO: Implement cart functionality
-    toast.success(`Added ${quantity} ${product.name}(s) to cart`)
+    // Check if variant selection is required
+    const hasVariants = (product.sizes && product.sizes.length > 0) || (product.colors && product.colors.length > 0)
+    
+    if (hasVariants) {
+      if (product.sizes && product.sizes.length > 0 && !selectedSize) {
+        toast.error('Please select a size')
+        return
+      }
+      if (product.colors && product.colors.length > 0 && !selectedColor) {
+        toast.error('Please select a color')
+        return
+      }
+    }
+
+    const cartItem = {
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      quantity,
+      size: selectedSize,
+      color: selectedColor,
+      image: product.images?.[0],
+    }
+    
+    addItem(cartItem)
+    toast.success(`Added ${quantity} ${product.name}(s) to cart${selectedSize ? ` (${selectedSize})` : ''}${selectedColor ? ` (${selectedColor})` : ''}`)
   }
 
   const handleQuantityChange = (delta: number) => {
