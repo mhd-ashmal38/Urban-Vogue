@@ -4,6 +4,7 @@ import { Mail, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 import { authApi } from '../services/auth'
 import { useAuthStore } from '../store/authStore'
+import { useCartStore } from '../store/cartStore'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
@@ -13,6 +14,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../co
 export default function Login() {
   const navigate = useNavigate()
   const setAuth = useAuthStore((state) => state.setAuth)
+  const mergeGuestCart = useCartStore((state) => state.mergeGuestCart)
+  const fetchCart = useCartStore((state) => state.fetchCart)
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -53,6 +56,14 @@ export default function Login() {
       console.log('Login successful:', response)
       setAuth(response.user, response.accessToken, response.refreshToken)
       toast.success('Login successful!')
+
+      // Merge guest cart with user cart
+      const guestCart = useCartStore.getState()
+      if (guestCart.items.length > 0) {
+        await mergeGuestCart(guestCart.items)
+      } else {
+        await fetchCart()
+      }
 
       // Redirect based on role
       if (response.user.role === 'ADMIN') {

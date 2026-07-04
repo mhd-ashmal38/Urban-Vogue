@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { useCartStore } from './cartStore'
 
 // Define the User type (matches your backend User model)
 interface User {
@@ -35,13 +36,16 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
 
       // Set user and both tokens after successful login/register
-      setAuth: (user, accessToken, refreshToken) =>
+      setAuth: (user, accessToken, refreshToken) => {
         set({
           user,
           token: accessToken,
           refreshToken,
           isAuthenticated: true,
-        }),
+        })
+        // Fetch user's cart from backend
+        useCartStore.getState().fetchCart()
+      },
 
       // Update tokens only (called after token refresh)
       setToken: (accessToken, refreshToken) =>
@@ -51,13 +55,16 @@ export const useAuthStore = create<AuthStore>()(
         }),
 
       // Clear everything on logout
-      logout: () =>
+      logout: () => {
         set({
           user: null,
           token: null,
           refreshToken: null,
           isAuthenticated: false,
-        }),
+        })
+        // Clear cart on logout
+        useCartStore.getState().clearCart()
+      },
 
       // Update user data (e.g., after profile update)
       setUser: (user) =>

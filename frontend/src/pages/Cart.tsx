@@ -6,11 +6,11 @@ import { Button } from '../components/ui/button'
 export default function Cart() {
   const { items, removeItem, updateQuantity, getTotalPrice, getTotalItems, clearCart } = useCartStore()
 
-  const handleQuantityChange = (productId: string, quantity: number, size?: string, color?: string) => {
+  const handleQuantityChange = async (productId: string, quantity: number, size?: string, color?: string) => {
     if (quantity < 1) {
-      removeItem(productId, size, color)
+      await removeItem(productId, size, color)
     } else {
-      updateQuantity(productId, quantity, size, color)
+      await updateQuantity(productId, quantity, size, color)
     }
   }
 
