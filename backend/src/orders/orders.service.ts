@@ -25,7 +25,11 @@ export class OrdersService {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                variants: true,
+              },
+            },
           },
         },
       },
@@ -49,19 +53,33 @@ export class OrdersService {
         shippingAddress: createOrderDto.shippingAddress,
         status: 'PENDING',
         items: {
-          create: cart.items.map((item) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            price: item.product.price,
-            size: item.size,
-            color: item.color,
-          })),
+          create: cart.items.map((item) => {
+            // Find the variant that matches the cart item's color
+            const matchingVariant = item.product.variants?.find(
+              (variant) => variant.color === item.color
+            );
+
+            return {
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.product.price,
+              size: item.size,
+              color: item.color,
+              image: matchingVariant && matchingVariant.images.length > 0
+                ? matchingVariant.images[0]
+                : null,
+            };
+          }),
         },
       },
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                variants: true,
+              },
+            },
           },
         },
       },
@@ -84,7 +102,11 @@ export class OrdersService {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                variants: true,
+              },
+            },
           },
         },
       },
@@ -107,7 +129,11 @@ export class OrdersService {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                variants: true,
+              },
+            },
           },
         },
         user: {
@@ -157,7 +183,11 @@ export class OrdersService {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                variants: true,
+              },
+            },
           },
         },
       },
@@ -172,7 +202,11 @@ export class OrdersService {
       include: {
         items: {
           include: {
-            product: true,
+            product: {
+              include: {
+                variants: true,
+              },
+            },
           },
         },
         user: {

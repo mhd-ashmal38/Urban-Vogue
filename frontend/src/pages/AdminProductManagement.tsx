@@ -32,21 +32,33 @@ export default function AdminProductManagement() {
     name: '',
     description: '',
     price: '',
-    stock: '',
     categoryId: '',
-    images: [] as string[],
-    sizes: [] as string[],
-    colors: [] as string[],
+    variants: [] as Array<{
+      color: string
+      images: string[]
+      sizeStock: Record<string, number>
+      price?: number
+    }>,
   })
 
-  // Image upload state
+  // Standard sizes for dress shopping
+  const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+
+  // Current variant being edited
+  const [currentVariant, setCurrentVariant] = useState<{
+    color: string
+    images: string[]
+    sizeStock: Record<string, number>
+    price?: number
+  }>({
+    color: '',
+    images: [],
+    sizeStock: {},
+    price: undefined,
+  })
+
+  // Image upload state for current variant
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
-
-  // Size input state
-  const [sizeInput, setSizeInput] = useState('')
-
-  // Color input state
-  const [colorInput, setColorInput] = useState('')
 
   const columns: Column<Product>[] = [
     {
@@ -55,9 +67,9 @@ export default function AdminProductManagement() {
       sortable: true,
       render: (_value, product) => (
         <div className="flex items-center">
-          {product.images && product.images.length > 0 ? (
+          {product.variants && product.variants.length > 0 && product.variants[0].images.length > 0 ? (
             <img
-              src={product.images[0]}
+              src={product.variants[0].images[0]}
               alt={product.name}
               className="h-10 w-10 rounded object-cover mr-3"
             />
@@ -93,6 +105,13 @@ export default function AdminProductManagement() {
       header: 'Stock',
       key: 'stock',
       sortable: true,
+      render: (_value, product) => {
+        const totalStock = product.variants?.reduce((sum, variant) => {
+          const variantStock = Object.values(variant.sizeStock || {}).reduce((s, stock) => s + (stock || 0), 0);
+          return sum + variantStock;
+        }, 0) || 0;
+        return <span className="text-sm font-medium">{totalStock}</span>;
+      },
     },
   ]
 
@@ -163,15 +182,16 @@ export default function AdminProductManagement() {
       name: '',
       description: '',
       price: '',
-      stock: '',
       categoryId: '',
+      variants: [],
+    })
+    setCurrentVariant({
+      color: '',
       images: [],
-      sizes: [],
-      colors: [],
+      sizeStock: {},
+      price: undefined,
     })
     setSelectedFiles([])
-    setSizeInput('')
-    setColorInput('')
     setIsModalOpen(true)
   }
 
@@ -181,15 +201,21 @@ export default function AdminProductManagement() {
       name: product.name,
       description: product.description || '',
       price: String(product.price),
-      stock: String(product.stock),
       categoryId: product.categoryId,
-      images: product.images || [],
-      sizes: product.sizes || [],
-      colors: product.colors || [],
+      variants: product.variants?.map(v => ({
+        color: v.color,
+        images: v.images,
+        sizeStock: v.sizeStock,
+        price: v.price ? Number(v.price) : undefined,
+      })) || [],
+    })
+    setCurrentVariant({
+      color: '',
+      images: [],
+      sizeStock: {},
+      price: undefined,
     })
     setSelectedFiles([])
-    setSizeInput('')
-    setColorInput('')
     setIsModalOpen(true)
   }
 
@@ -200,15 +226,16 @@ export default function AdminProductManagement() {
       name: '',
       description: '',
       price: '',
-      stock: '',
       categoryId: '',
+      variants: [],
+    })
+    setCurrentVariant({
+      color: '',
       images: [],
-      sizes: [],
-      colors: [],
+      sizeStock: {},
+      price: undefined,
     })
     setSelectedFiles([])
-    setSizeInput('')
-    setColorInput('')
   }
 
   const handleImageUpload = async () => {
@@ -220,7 +247,10 @@ export default function AdminProductManagement() {
     setUploadingImages(true)
     try {
       const response = await productsApi.uploadImages(selectedFiles)
-      setFormData({ ...formData, images: [...formData.images, ...response.images] })
+      setCurrentVariant({
+        ...currentVariant,
+        images: [...currentVariant.images, ...response.images],
+      })
       setSelectedFiles([])
       toast.success('Images uploaded successfully')
     } catch (err) {
@@ -231,30 +261,72 @@ export default function AdminProductManagement() {
     }
   }
 
-  const removeImage = async (index: number) => {
-    const imageUrl = formData.images[index]
-    
-    try {
-      await productsApi.deleteImage(imageUrl)
-      const newImages = formData.images.filter((_, i) => i !== index)
-      setFormData({ ...formData, images: newImages })
-      toast.success('Image deleted successfully')
-    } catch (err) {
-      toast.error('Failed to delete image')
-      console.error(err)
-    }
-  }
-
   const removeSelectedFile = (index: number) => {
     const newFiles = selectedFiles.filter((_, i) => i !== index)
     setSelectedFiles(newFiles)
   }
 
+  const removeVariantImage = (index: number) => {
+    const newImages = currentVariant.images.filter((_, i) => i !== index)
+    setCurrentVariant({
+      ...currentVariant,
+      images: newImages,
+    })
+  }
+
+  const addVariant = () => {
+    if (!currentVariant.color || currentVariant.images.length === 0) {
+      toast.error('Please add color name and at least one image')
+      return
+    }
+
+    const hasStock = Object.values(currentVariant.sizeStock).some(stock => stock > 0)
+    if (!hasStock) {
+      toast.error('Please add stock for at least one size')
+      return
+    }
+
+    setFormData({
+      ...formData,
+      variants: [...formData.variants, { ...currentVariant }],
+    })
+
+    setCurrentVariant({
+      color: '',
+      images: [],
+      sizeStock: {},
+      price: undefined,
+    })
+  }
+
+  const removeVariant = (index: number) => {
+    setFormData({
+      ...formData,
+      variants: formData.variants.filter((_, i) => i !== index),
+    })
+  }
+
+  const updateSizeStock = (size: string, value: string) => {
+    const stock = parseInt(value) || 0
+    setCurrentVariant({
+      ...currentVariant,
+      sizeStock: {
+        ...currentVariant.sizeStock,
+        [size]: stock,
+      },
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.name || !formData.price || !formData.stock || !formData.categoryId) {
+    if (!formData.name || !formData.price || !formData.categoryId) {
       toast.error('Please fill all required fields')
+      return
+    }
+
+    if (formData.variants.length === 0) {
+      toast.error('Please add at least one color variant')
       return
     }
 
@@ -265,11 +337,8 @@ export default function AdminProductManagement() {
         name: formData.name,
         description: formData.description,
         price: Number(formData.price),
-        stock: Number(formData.stock),
         categoryId: formData.categoryId,
-        images: formData.images,
-        sizes: formData.sizes,
-        colors: formData.colors,
+        variants: formData.variants,
       }
 
       if (editingProduct) {
@@ -499,7 +568,7 @@ export default function AdminProductManagement() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price">Price ($) *</Label>
+              <Label htmlFor="price">Base Price ($) *</Label>
               <Input
                 id="price"
                 type="number"
@@ -512,161 +581,152 @@ export default function AdminProductManagement() {
               />
             </div>
             <div>
-              <Label htmlFor="stock">Stock *</Label>
-              <Input
-                id="stock"
-                type="number"
-                min="0"
-                value={formData.stock}
-                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                placeholder="0"
-                required
+              <Select
+                label="Category *"
+                value={formData.categoryId}
+                onChange={(value) =>
+                  setFormData({ ...formData, categoryId: value })
+                }
+                options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+                placeholder="Select a category"
               />
             </div>
           </div>
 
-          <div>
-            <Select
-              label="Category *"
-              value={formData.categoryId}
-              onChange={(value) =>
-                setFormData({ ...formData, categoryId: value })
-              }
-              options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
-              placeholder="Select a category"
-            />
-          </div>
-
-          {/* Image Upload Section */}
+          {/* Color Variants Section */}
           <div className="border border-gray-200 rounded-lg p-4">
-            <Label>Product Images</Label>
-            <div className="mt-2">
-              <FileUpload
-                onFilesChange={setSelectedFiles}
-                onUpload={handleImageUpload}
-                selectedFiles={selectedFiles}
-                uploadedFiles={formData.images}
-                onRemoveSelected={removeSelectedFile}
-                onRemoveUploaded={removeImage}
-                uploading={uploadingImages}
-                maxFiles={5}
-                maxSizeMB={5}
-                accept="image/*"
-              />
-            </div>
-          </div>
+            <Label>Color Variants</Label>
+            <p className="text-xs text-gray-500 mt-1">Add color variants with images and size-specific stock</p>
 
-          {/* Sizes Section */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <Label>Available Sizes</Label>
-            <div className="mt-2 flex gap-2">
-              <Input
-                value={sizeInput}
-                onChange={(e) => setSizeInput(e.target.value)}
-                placeholder="Enter size (e.g., S, M, L, XL)"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    if (sizeInput.trim() && !formData.sizes.includes(sizeInput.trim())) {
-                      setFormData({ ...formData, sizes: [...formData.sizes, sizeInput.trim()] })
-                      setSizeInput('')
-                    }
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                onClick={() => {
-                  if (sizeInput.trim() && !formData.sizes.includes(sizeInput.trim())) {
-                    setFormData({ ...formData, sizes: [...formData.sizes, sizeInput.trim()] })
-                    setSizeInput('')
-                  }
-                }}
-                variant="outline"
-                className="border-gray-300"
-              >
-                Add
-              </Button>
-            </div>
-            {formData.sizes.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {formData.sizes.map((size, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-800"
-                  >
-                    {size}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          sizes: formData.sizes.filter((_, i) => i !== index),
-                        })
-                      }}
-                      className="ml-2 text-purple-600 hover:text-purple-900"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
+            {/* Add New Variant */}
+            <div className="mt-4 space-y-4">
+              <div>
+                <Label htmlFor="variantColor">Color Name *</Label>
+                <Input
+                  id="variantColor"
+                  value={currentVariant.color}
+                  onChange={(e) => setCurrentVariant({ ...currentVariant, color: e.target.value })}
+                  placeholder="e.g., Red, Blue, Black"
+                />
               </div>
-            )}
-          </div>
 
-          {/* Colors Section */}
-          <div className="border border-gray-200 rounded-lg p-4">
-            <Label>Available Colors</Label>
-            <div className="mt-2 flex gap-2">
-              <Input
-                value={colorInput}
-                onChange={(e) => setColorInput(e.target.value)}
-                placeholder="Enter color (e.g., Red, Blue, Black)"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    if (colorInput.trim() && !formData.colors.includes(colorInput.trim())) {
-                      setFormData({ ...formData, colors: [...formData.colors, colorInput.trim()] })
-                      setColorInput('')
-                    }
-                  }
-                }}
-              />
+              <div>
+                <Label>Images for this color *</Label>
+                <div className="mt-2">
+                  <FileUpload
+                    onFilesChange={setSelectedFiles}
+                    onUpload={handleImageUpload}
+                    selectedFiles={selectedFiles}
+                    uploadedFiles={currentVariant.images}
+                    onRemoveSelected={removeSelectedFile}
+                    onRemoveUploaded={removeVariantImage}
+                    uploading={uploadingImages}
+                    maxFiles={5}
+                    maxSizeMB={5}
+                    accept="image/*"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Stock by Size</Label>
+                <p className="text-xs text-gray-500">Set stock for each available size (0 = out of stock)</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {STANDARD_SIZES.map((size) => (
+                    <div key={size}>
+                      <Label htmlFor={`stock-${size}`} className="text-sm">{size}</Label>
+                      <Input
+                        id={`stock-${size}`}
+                        type="number"
+                        min="0"
+                        value={currentVariant.sizeStock[size] || ''}
+                        onChange={(e) => updateSizeStock(size, e.target.value)}
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="variantPrice">Price Override (optional)</Label>
+                <Input
+                  id="variantPrice"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={currentVariant.price || ''}
+                  onChange={(e) => setCurrentVariant({ ...currentVariant, price: e.target.value ? Number(e.target.value) : undefined })}
+                  placeholder="Leave empty to use base price"
+                />
+              </div>
+
               <Button
                 type="button"
-                onClick={() => {
-                  if (colorInput.trim() && !formData.colors.includes(colorInput.trim())) {
-                    setFormData({ ...formData, colors: [...formData.colors, colorInput.trim()] })
-                    setColorInput('')
-                  }
-                }}
-                variant="outline"
-                className="border-gray-300"
+                onClick={addVariant}
+                className="w-full"
               >
-                Add
+                Add Color Variant
               </Button>
             </div>
-            {formData.colors.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {formData.colors.map((color, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-                  >
-                    {color}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData({
-                          ...formData,
-                          colors: formData.colors.filter((_, i) => i !== index),
-                        })
-                      }}
-                      className="ml-2 text-blue-600 hover:text-blue-900"
-                    >
-                      ×
-                    </button>
-                  </span>
+
+            {/* Display Added Variants */}
+            {formData.variants.length > 0 && (
+              <div className="mt-6 space-y-4">
+                <Label>Added Color Variants:</Label>
+                {formData.variants.map((variant, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="font-semibold text-lg">{variant.color}</h4>
+                        {variant.price && (
+                          <p className="text-sm text-purple-600">Price: ${variant.price.toFixed(2)}</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeVariant(index)}
+                        className="text-red-600 hover:text-red-900 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+
+                    <div className="mb-3">
+                      <p className="text-sm font-medium mb-1">Images:</p>
+                      <div className="flex gap-2">
+                        {variant.images.map((img, imgIndex) => (
+                          <img
+                            key={imgIndex}
+                            src={img}
+                            alt={`${variant.color} variant`}
+                            className="w-16 h-16 object-cover rounded border"
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium mb-1">Stock by Size:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {STANDARD_SIZES.map((size) => {
+                          const stock = variant.sizeStock[size] || 0
+                          return (
+                            <span
+                              key={size}
+                              className={`inline-flex items-center px-2 py-1 rounded text-xs ${
+                                stock > 0
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              {size}: {stock}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}

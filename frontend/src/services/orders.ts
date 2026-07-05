@@ -7,6 +7,7 @@ export interface OrderItem {
   price: number
   size?: string | null
   color?: string | null
+  image?: string | null
   product: {
     id: string
     name: string

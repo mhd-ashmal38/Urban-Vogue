@@ -63,20 +63,50 @@ export class CartService {
     }>;
     total: number;
   }> {
-    const cart = await this.getOrCreateCart(userId);
+    const cart = await this.prisma.cart.findUnique({
+      where: { userId },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                variants: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!cart) {
+      return {
+        id: '',
+        items: [],
+        total: 0,
+      };
+    }
 
     return {
       id: cart.id,
-      items: cart.items.map((item) => ({
-        id: item.id,
-        productId: item.productId,
-        name: item.product.name,
-        price: Number(item.product.price),
-        quantity: item.quantity,
-        size: item.size,
-        color: item.color,
-        image: item.product.images[0] || null,
-      })),
+      items: cart.items.map((item) => {
+        // Find the variant that matches the cart item's color
+        const matchingVariant = item.product.variants?.find(
+          variant => variant.color === item.color
+        );
+
+        return {
+          id: item.id,
+          productId: item.productId,
+          name: item.product.name,
+          price: Number(item.product.price),
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+          image: matchingVariant && matchingVariant.images.length > 0
+            ? matchingVariant.images[0]
+            : null,
+        };
+      }),
       total: cart.items.reduce<number>(
         (sum: number, item) => sum + Number(item.product.price) * item.quantity,
         0,

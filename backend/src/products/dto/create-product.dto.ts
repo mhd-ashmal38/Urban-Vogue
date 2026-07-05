@@ -5,20 +5,21 @@ import {
   IsNumber,
   Min,
   IsNotEmpty,
+  ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { CreateVariantDto } from './create-variant.dto';
 
 /**
  * CreateProductDto - Defines the structure for creating a new product
  *
- * This DTO validates product creation data:
- * - name: Required, must be at least 2 characters
+ * This DTO validates product creation data for dress shopping app:
+ * - name: Required
  * - description: Optional
- * - price: Required, must be a positive number
- * - stock: Required, must be a non-negative integer
+ * - price: Required, base price for the product
  * - categoryId: Required, must reference an existing category
- * - images: Optional array of image URLs
+ * - variants: Required array of color variants with images and size stock
  *
  * Validation decorators from class-validator:
  * - @IsString() - Ensures the field is a string
@@ -27,18 +28,19 @@ import { Type } from 'class-transformer';
  * - @IsNumber() - Ensures the field is a number
  * - @Min() - Ensures the number is at least the specified value
  * - @IsNotEmpty() - Ensures the field is not empty
+ * - @ValidateNested() - Validates nested objects
  *
  * ApiProperty decorators for Swagger documentation:
  * - @ApiProperty() - Describes the field in API docs
  */
 export class CreateProductDto {
-  @ApiProperty({ example: 'iPhone 15 Pro', description: 'Product name' })
+  @ApiProperty({ example: 'Summer Floral Dress', description: 'Product name' })
   @IsString()
   @IsNotEmpty()
   name: string;
 
   @ApiProperty({
-    example: 'Latest iPhone with A17 Pro chip',
+    example: 'Beautiful summer dress with floral pattern',
     description: 'Product description',
     required: false,
   })
@@ -46,17 +48,11 @@ export class CreateProductDto {
   @IsOptional()
   description?: string;
 
-  @ApiProperty({ example: 999.99, description: 'Product price' })
+  @ApiProperty({ example: 49.99, description: 'Base product price' })
   @IsNumber()
   @Min(0)
   @Type(() => Number)
   price: number;
-
-  @ApiProperty({ example: 50, description: 'Number of items in stock' })
-  @IsNumber()
-  @Min(0)
-  @Type(() => Number)
-  stock: number;
 
   @ApiProperty({
     example: 'uuid-of-category',
@@ -67,38 +63,11 @@ export class CreateProductDto {
   categoryId: string;
 
   @ApiProperty({
-    example: [
-      'https://example.com/image1.jpg',
-      'https://example.com/image2.jpg',
-    ],
-    description: 'Array of image URLs',
-    required: false,
-    type: [String],
+    description: 'Array of color variants with images and size stock',
+    type: [CreateVariantDto],
   })
   @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  images?: string[];
-
-  @ApiProperty({
-    example: ['S', 'M', 'L', 'XL'],
-    description: 'Array of available sizes',
-    required: false,
-    type: [String],
-  })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  sizes?: string[];
-
-  @ApiProperty({
-    example: ['Red', 'Blue', 'Black'],
-    description: 'Array of available colors',
-    required: false,
-    type: [String],
-  })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  colors?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => CreateVariantDto)
+  variants: CreateVariantDto[];
 }

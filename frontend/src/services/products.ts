@@ -9,17 +9,25 @@ export interface Category {
   updatedAt: string
 }
 
+export interface ProductVariant {
+  id: string
+  productId: string
+  color: string
+  images: string[]
+  sizeStock: Record<string, number> // { "XS": 5, "S": 10, "M": 8, "L": 0, "XL": 3, "XXL": 0 }
+  price: number | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Product {
   id: string
   name: string
   description: string | null
   price: number
-  stock: number
-  images: string[]
-  sizes: string[]
-  colors: string[]
   categoryId: string
   category: Category
+  variants: ProductVariant[]
   createdAt: string
   updatedAt: string
 }
@@ -34,26 +42,27 @@ interface UpdateCategoryDto {
   description?: string
 }
 
+interface CreateVariantDto {
+  color: string
+  images: string[]
+  sizeStock: Record<string, number>
+  price?: number
+}
+
 interface CreateProductDto {
   name: string
   description?: string
   price: number
-  stock: number
   categoryId: string
-  images?: string[]
-  sizes?: string[]
-  colors?: string[]
+  variants: CreateVariantDto[]
 }
 
 interface UpdateProductDto {
   name?: string
   description?: string
   price?: number
-  stock?: number
   categoryId?: string
-  images?: string[]
-  sizes?: string[]
-  colors?: string[]
+  variants?: CreateVariantDto[]
 }
 
 interface DeleteResponse {
