@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {
@@ -18,7 +19,23 @@ export class OrdersService {
   async createOrder(
     userId: string,
     createOrderDto: CreateOrderDto,
-  ): Promise<any> {
+  ): Promise<
+    /* eslint-disable prettier/prettier */
+    Prisma.OrderGetPayload<{
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                variants: true,
+              },
+            },
+          },
+        },
+      },
+    }>
+    /* eslint-enable prettier/prettier */
+  > {
     // Get user's cart
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
@@ -39,56 +56,135 @@ export class OrdersService {
       throw new BadRequestException('Cart is empty');
     }
 
+    // Validate stock availability and prepare variant updates
+    const variantUpdates: Array<{
+      variantId: string;
+      size: string;
+      quantity: number;
+    }> = [];
+
+    for (const item of cart.items) {
+      const matchingVariant = item.product.variants?.find(
+        (variant) => variant.color === item.color,
+      );
+
+      if (!matchingVariant) {
+        throw new BadRequestException(
+          `Variant not found for color: ${item.color}`,
+        );
+      }
+
+      const sizeStock =
+        (matchingVariant.sizeStock as Record<string, number>) || {};
+      const currentStock = sizeStock[item.size || ''] || 0;
+
+      if (currentStock < item.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for ${item.product.name} (${item.color}, ${item.size}). Available: ${currentStock}, Requested: ${item.quantity}`
+        );
+      }
+
+      variantUpdates.push({
+        variantId: matchingVariant.id,
+        size: item.size || '',
+        quantity: item.quantity,
+      });
+    }
+
     // Calculate total
     const total = cart.items.reduce<number>(
       (sum: number, item) => sum + Number(item.product.price) * item.quantity,
       0,
     );
 
-    // Create order with items
-    const order = await this.prisma.order.create({
-      data: {
-        userId,
-        total,
-        shippingAddress: createOrderDto.shippingAddress,
-        status: 'PENDING',
-        items: {
-          create: cart.items.map((item) => {
-            // Find the variant that matches the cart item's color
-            const matchingVariant = item.product.variants?.find(
-              (variant) => variant.color === item.color
-            );
-
-            return {
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.product.price,
-              size: item.size,
-              color: item.color,
-              image: matchingVariant && matchingVariant.images.length > 0
-                ? matchingVariant.images[0]
-                : null,
-            };
-          }),
-        },
-      },
-      include: {
-        items: {
+    // Use transaction to ensure atomicity
+    const order = await this.prisma.$transaction(
+      async (
+        tx,
+      ): Promise<
+        Prisma.OrderGetPayload<{
           include: {
-            product: {
+            items: {
               include: {
-                variants: true,
+                product: {
+                  include: {
+                    variants: true;
+                  };
+                };
+              };
+            };
+          };
+        }>
+      > => {
+        // Deduct stock from variants
+        for (const update of variantUpdates) {
+          const variant = await tx.productVariant.findUnique({
+            where: { id: update.variantId },
+          });
+
+          if (!variant) {
+            throw new BadRequestException('Variant not found');
+          }
+
+          const sizeStock = (variant.sizeStock as Record<string, number>) || {};
+          const updatedSizeStock = { ...sizeStock };
+          updatedSizeStock[update.size] =
+            (updatedSizeStock[update.size] || 0) - update.quantity;
+
+          await tx.productVariant.update({
+            where: { id: update.variantId },
+            data: { sizeStock: updatedSizeStock },
+          });
+        }
+
+        // Create order with items
+        const newOrder = await tx.order.create({
+          data: {
+            userId,
+            total,
+            shippingAddress: createOrderDto.shippingAddress,
+            status: 'PENDING',
+            items: {
+              create: cart.items.map((item) => {
+                const matchingVariant = item.product.variants?.find(
+                  (variant) => variant.color === item.color,
+                );
+
+                return {
+                  productId: item.productId,
+                  quantity: item.quantity,
+                  price: item.product.price,
+                  size: item.size,
+                  color: item.color,
+                  image:
+                    matchingVariant && matchingVariant.images.length > 0
+                      ? matchingVariant.images[0]
+                      : null,
+                };
+              }),
+            },
+          },
+          include: {
+            items: {
+              include: {
+                product: {
+                  include: {
+                    variants: true,
+                  },
+                },
               },
             },
           },
-        },
-      },
-    });
+        });
 
-    // Clear the cart
-    await this.prisma.cartItem.deleteMany({
-      where: { cartId: cart.id },
-    });
+        // Clear the cart
+        await tx.cartItem.deleteMany({
+          where: { cartId: cart.id },
+        });
+
+        return newOrder;
+      },
+    );
 
     return order;
   }
@@ -169,12 +265,81 @@ export class OrdersService {
   ): Promise<any> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
+      include: {
+        items: {
+          include: {
+            product: {
+              include: {
+                variants: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!order) {
       throw new NotFoundException('Order not found');
     }
 
+    // If cancelling, restore stock
+    if (updateOrderDto.status === 'CANCELLED' && order.status !== 'CANCELLED') {
+      await this.prisma.$transaction(async (tx) => {
+        for (const item of order.items) {
+          const matchingVariant = item.product.variants?.find(
+            (variant) => variant.color === item.color
+          );
+
+          if (!matchingVariant) {
+            continue; // Skip if variant not found
+          }
+
+          const variant = await tx.productVariant.findUnique({
+            where: { id: matchingVariant.id },
+          });
+
+          if (!variant) {
+            continue;
+          }
+
+          // Restore stock
+          const sizeStock = (variant.sizeStock as Record<string, number>) || {};
+          const updatedSizeStock = { ...sizeStock };
+          const size = item.size || '';
+
+          updatedSizeStock[size] = (updatedSizeStock[size] || 0) + item.quantity;
+
+          await tx.productVariant.update({
+            where: { id: matchingVariant.id },
+            data: { sizeStock: updatedSizeStock },
+          });
+        }
+
+        // Update order status
+        await tx.order.update({
+          where: { id: orderId },
+          data: { status: updateOrderDto.status },
+        });
+      });
+
+      // Return updated order
+      return await this.prisma.order.findUnique({
+        where: { id: orderId },
+        include: {
+          items: {
+            include: {
+              product: {
+                include: {
+                  variants: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    // Normal status update
     return await this.prisma.order.update({
       where: { id: orderId },
       data: {
