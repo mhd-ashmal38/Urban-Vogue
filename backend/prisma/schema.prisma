@@ -130,6 +130,7 @@ model OrderItem {
   price     Decimal  @db.Decimal(10, 2)
   size      String?
   color     String?
+  image     String?
   createdAt DateTime @default(now())
 
   @@index([orderId])

@@ -71,10 +71,10 @@ export default function AdminOrders() {
       header: 'Total',
       key: 'total',
       sortable: true,
-      render: (value: number) => (
+      render: (value: number | string) => (
         <div className="flex items-center gap-2 text-sm font-medium">
           <DollarSign className="w-4 h-4" />
-          ${value.toFixed(2)}
+          ${Number(value).toFixed(2)}
         </div>
       ),
     },
