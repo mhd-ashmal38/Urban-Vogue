@@ -94,37 +94,6 @@ export default function AdminProductManagement() {
       key: 'stock',
       sortable: true,
     },
-    {
-      header: 'Variants',
-      key: 'variants',
-      render: (_value, product) => (
-        <div className="space-y-1">
-          {product.sizes && product.sizes.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              <span className="text-xs text-gray-500">Sizes:</span>
-              {product.sizes.map((size, i) => (
-                <span key={i} className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-                  {size}
-                </span>
-              ))}
-            </div>
-          )}
-          {product.colors && product.colors.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              <span className="text-xs text-gray-500">Colors:</span>
-              {product.colors.map((color, i) => (
-                <span key={i} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                  {color}
-                </span>
-              ))}
-            </div>
-          )}
-          {!product.sizes?.length && !product.colors?.length && (
-            <span className="text-xs text-gray-400">No variants</span>
-          )}
-        </div>
-      ),
-    },
   ]
 
   const actions: Action<Product>[] = [
@@ -402,7 +371,7 @@ export default function AdminProductManagement() {
   if (loading) {
     return (
       <AdminLayout>
-        <SkeletonTable rows={10} columns={5} showCheckbox showActions />
+        <SkeletonTable rows={10} columns={4} showCheckbox showActions />
       </AdminLayout>
     )
   }
