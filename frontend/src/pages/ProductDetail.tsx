@@ -53,11 +53,6 @@ export default function ProductDetail() {
     fetchProduct()
   }, [id])
 
-  useEffect(() => {
-    // Reset image index when variant changes
-    setCurrentImageIndex(0)
-  }, [selectedVariant])
-
   const handleAddToCart = async () => {
     if (!product || !selectedVariant || !selectedSize) return
 
@@ -113,6 +108,7 @@ export default function ProductDetail() {
 
   const handleVariantChange = (variant: ProductVariant) => {
     setSelectedVariant(variant)
+    setCurrentImageIndex(0)
     // Select first available size for new variant
     const firstAvailableSize = STANDARD_SIZES.find(
       size => variant.sizeStock[size] && variant.sizeStock[size] > 0

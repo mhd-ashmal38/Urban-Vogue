@@ -411,14 +411,20 @@ export default function AdminProductManagement() {
 
   const handleExportCSV = () => {
     const headers = ['Name', 'Category', 'Price', 'Stock', 'Description', 'Created At']
-    const rows = filteredProducts.map((product) => [
-      product.name,
-      product.category.name,
-      product.price.toString(),
-      product.stock.toString(),
-      product.description || '',
-      new Date(product.createdAt).toLocaleDateString(),
-    ])
+    const rows = filteredProducts.map((product) => {
+      const totalStock = product.variants?.reduce((sum, variant) => {
+        const variantStock = Object.values(variant.sizeStock || {}).reduce((s, stock) => s + (stock || 0), 0);
+        return sum + variantStock;
+      }, 0) || 0;
+      return [
+        product.name,
+        product.category.name,
+        product.price.toString(),
+        totalStock.toString(),
+        product.description || '',
+        new Date(product.createdAt).toLocaleDateString(),
+      ];
+    })
 
     const csvContent = [
       headers.join(','),

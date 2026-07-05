@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Package, Calendar, DollarSign, User, Eye } from 'lucide-react'
-import { orderApi, type Order } from '../services/orders'
+import { orderApi, type Order, type OrderItem } from '../services/orders'
 import { Table, type Column, type Action } from '../components/ui/table'
 import AdminLayout from '../components/AdminLayout'
 import SkeletonTable from '../components/ui/skeleton-table'
@@ -38,7 +38,7 @@ export default function AdminOrders() {
       header: 'Customer',
       key: 'user',
       sortable: true,
-      render: (value: any) => (
+      render: (value: Order['user']) => (
         <div className="flex items-center gap-2">
           <User className="w-4 h-4 text-gray-400" />
           <span className="text-sm">{value?.name || value?.email || 'N/A'}</span>
@@ -60,7 +60,7 @@ export default function AdminOrders() {
       header: 'Items',
       key: 'items',
       sortable: true,
-      render: (value: any[]) => (
+      render: (value: OrderItem[]) => (
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <Package className="w-4 h-4" />
           {value.length} item{value.length !== 1 ? 's' : ''}
@@ -71,10 +71,10 @@ export default function AdminOrders() {
       header: 'Total',
       key: 'total',
       sortable: true,
-      render: (value: any) => (
+      render: (value: number) => (
         <div className="flex items-center gap-2 text-sm font-medium">
           <DollarSign className="w-4 h-4" />
-          ${Number(value).toFixed(2)}
+          ${value.toFixed(2)}
         </div>
       ),
     },
@@ -161,7 +161,7 @@ export default function AdminOrders() {
         status: newStatus as 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED',
       })
       setOrders(orders.map((order) => 
-        order.id === orderId ? { ...order, status: newStatus as any } : order
+        order.id === orderId ? { ...order, status: newStatus as Order['status'] } : order
       ))
     } catch (error) {
       console.error('Failed to update order status:', error)
