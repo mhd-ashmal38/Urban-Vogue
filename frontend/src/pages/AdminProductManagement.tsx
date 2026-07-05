@@ -9,6 +9,8 @@ import { Dialog } from '../components/ui/dialog'
 import { Select } from '../components/ui/select'
 import { FileUpload } from '../components/ui/file-upload'
 import { Table, type Column, type Action } from '../components/ui/table'
+import AdminLayout from '../components/AdminLayout'
+import SkeletonTable from '../components/ui/skeleton-table'
 
 export default function AdminProductManagement() {
   const [products, setProducts] = useState<Product[]>([])
@@ -91,37 +93,6 @@ export default function AdminProductManagement() {
       header: 'Stock',
       key: 'stock',
       sortable: true,
-    },
-    {
-      header: 'Variants',
-      key: 'variants',
-      render: (_value, product) => (
-        <div className="space-y-1">
-          {product.sizes && product.sizes.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              <span className="text-xs text-gray-500">Sizes:</span>
-              {product.sizes.map((size, i) => (
-                <span key={i} className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">
-                  {size}
-                </span>
-              ))}
-            </div>
-          )}
-          {product.colors && product.colors.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              <span className="text-xs text-gray-500">Colors:</span>
-              {product.colors.map((color, i) => (
-                <span key={i} className="text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
-                  {color}
-                </span>
-              ))}
-            </div>
-          )}
-          {!product.sizes?.length && !product.colors?.length && (
-            <span className="text-xs text-gray-400">No variants</span>
-          )}
-        </div>
-      ),
     },
   ]
 
@@ -399,78 +370,76 @@ export default function AdminProductManagement() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading products...</p>
-        </div>
-      </div>
+      <AdminLayout>
+        <SkeletonTable rows={10} columns={4} showCheckbox showActions />
+      </AdminLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
-            <p className="text-gray-600 mt-1">Manage your product inventory</p>
-          </div>
-          <div className="flex gap-3">
-            <Button
-              onClick={handleExportCSV}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-            >
-              <Download className="w-5 h-5" />
-              Export CSV
-            </Button>
-            {selectedProducts.length > 0 && (
+    <AdminLayout>
+      <>
+        <div>
+          {/* Header */}
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
+              <p className="text-gray-600 mt-1">Manage your product inventory</p>
+            </div>
+            <div className="flex gap-3">
               <Button
-                onClick={handleBulkDelete}
-                className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                onClick={handleExportCSV}
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
               >
-                <Trash2 className="w-5 h-5" />
-                Delete Selected ({selectedProducts.length})
+                <Download className="w-5 h-5" />
+                Export CSV
               </Button>
-            )}
-            <Button
-              onClick={openCreateModal}
-              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Add Product
-            </Button>
+              {selectedProducts.length > 0 && (
+                <Button
+                  onClick={handleBulkDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  Delete Selected ({selectedProducts.length})
+                </Button>
+              )}
+              <Button
+                onClick={openCreateModal}
+                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" />
+                Add Product
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Products Table */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="mb-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder="Search products by name or description..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          {/* Search */}
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Search products by name or description..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
+
+          {/* Products Table */}
+          <Table
+            columns={columns}
+            data={filteredProducts}
+            actions={actions}
+            emptyMessage="No products found. Click 'Add Product' to create one."
+            height="calc(100vh - 300px)"
+            pageSize={10}
+            selectable={true}
+            onSelectionChange={setSelectedProducts}
+          />
         </div>
-        <Table
-          columns={columns}
-          data={filteredProducts}
-          actions={actions}
-          emptyMessage="No products found. Click 'Add Product' to create one."
-          height="calc(100vh - 200px)"
-          pageSize={10}
-          selectable={true}
-          onSelectionChange={setSelectedProducts}
-        />
-      </div>
 
       {/* Create/Edit Modal */}
       <Dialog
@@ -779,6 +748,7 @@ export default function AdminProductManagement() {
           )}
         </div>
       </Dialog>
-    </div>
+      </>
+    </AdminLayout>
   )
 }

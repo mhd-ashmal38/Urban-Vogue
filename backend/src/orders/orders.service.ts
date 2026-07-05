@@ -15,7 +15,10 @@ export class OrdersService {
   /**
    * Create an order from user's cart
    */
-  async createOrder(userId: string, createOrderDto: CreateOrderDto) {
+  async createOrder(
+    userId: string,
+    createOrderDto: CreateOrderDto,
+  ): Promise<any> {
     // Get user's cart
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
@@ -75,8 +78,8 @@ export class OrdersService {
   /**
    * Get all orders for a user
    */
-  async getUserOrders(userId: string) {
-    return this.prisma.order.findMany({
+  async getUserOrders(userId: string): Promise<any> {
+    return await this.prisma.order.findMany({
       where: { userId },
       include: {
         items: {
@@ -94,13 +97,24 @@ export class OrdersService {
   /**
    * Get a specific order by ID
    */
-  async getOrderById(orderId: string, userId: string, userRole: string) {
+  async getOrderById(
+    orderId: string,
+    userId: string,
+    userRole: string,
+  ): Promise<any> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
       include: {
         items: {
           include: {
             product: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
       },
@@ -123,7 +137,10 @@ export class OrdersService {
   /**
    * Update order status (admin only)
    */
-  async updateOrderStatus(orderId: string, updateOrderDto: UpdateOrderDto) {
+  async updateOrderStatus(
+    orderId: string,
+    updateOrderDto: UpdateOrderDto,
+  ): Promise<any> {
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
     });
@@ -132,7 +149,7 @@ export class OrdersService {
       throw new NotFoundException('Order not found');
     }
 
-    return this.prisma.order.update({
+    return await this.prisma.order.update({
       where: { id: orderId },
       data: {
         status: updateOrderDto.status,
@@ -150,8 +167,8 @@ export class OrdersService {
   /**
    * Get all orders (admin only)
    */
-  async getAllOrders() {
-    return this.prisma.order.findMany({
+  async getAllOrders(): Promise<any> {
+    return await this.prisma.order.findMany({
       include: {
         items: {
           include: {

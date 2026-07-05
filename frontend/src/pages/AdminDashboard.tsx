@@ -1,20 +1,16 @@
 import { Shield, Users, ShoppingBag, BarChart3 } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
+import AdminLayout from '../components/AdminLayout'
 
 export default function AdminDashboard() {
   const { user } = useAuthStore()
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-linear-to-r from-purple-600 to-indigo-600 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-purple-100 mt-2">Welcome, {user?.name || 'Admin'}</p>
-        </div>
-      </div>
+    <AdminLayout>
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <p className="text-gray-600 mb-8">Welcome, {user?.name || 'Admin'}</p>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Stats Cards */}
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -57,37 +53,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-
-        <div className="mt-8 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Admin Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Link
-              to="/admin/users"
-              className="bg-blue-500 text-white py-3 px-4 rounded-lg hover:bg-blue-600 transition-colors text-center"
-            >
-              Manage Users
-            </Link>
-            <Link
-              to="/admin/products"
-              className="bg-green-500 text-white py-3 px-4 rounded-lg hover:bg-green-600 transition-colors text-center"
-            >
-              Manage Products
-            </Link>
-            <Link
-              to="/admin/categories"
-              className="bg-purple-500 text-white py-3 px-4 rounded-lg hover:bg-purple-600 transition-colors text-center"
-            >
-              Manage Categories
-            </Link>
-            <Link
-              to="/admin/orders"
-              className="bg-orange-500 text-white py-3 px-4 rounded-lg hover:bg-orange-600 transition-colors text-center"
-            >
-              Manage Orders
-            </Link>
-          </div>
-        </div>
       </div>
-    </div>
+    </AdminLayout>
   )
 }

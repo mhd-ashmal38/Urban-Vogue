@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { CheckCircle, Package, MapPin, ArrowRight } from 'lucide-react'
+import { CheckCircle, Package, MapPin, ArrowRight, Calendar, DollarSign, ShoppingBag } from 'lucide-react'
 import { orderApi, type Order } from '../services/orders'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
@@ -54,108 +54,145 @@ export default function OrderConfirmation() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-6xl mx-auto">
         {/* Success Message */}
-        <div className="text-center mb-8">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
+            <CheckCircle className="w-10 h-10 text-green-600" />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Order Placed Successfully!
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 text-lg">
             Thank you for your purchase. Your order ID is{' '}
-            <span className="font-semibold">{order.id}</span>
+            <span className="font-semibold text-purple-600">#{order.id.slice(0, 8)}</span>
           </p>
         </div>
 
-        {/* Order Details */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Order Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-gray-600">Order ID:</span>
-              <span className="font-medium">{order.id}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Status:</span>
-              <span className="font-medium">{order.status}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Date:</span>
-              <span className="font-medium">
-                {new Date(order.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">Total:</span>
-              <span className="font-bold text-lg">
-                ${Number(order.total).toFixed(2)}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Shipping Address */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5" />
-              Shipping Address
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700">{order.shippingAddress}</p>
-          </CardContent>
-        </Card>
-
-        {/* Order Items */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Package className="w-5 h-5" />
-              Order Items
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex gap-4">
-                {item.product.images[0] && (
-                  <img
-                    src={item.product.images[0]}
-                    alt={item.product.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                )}
-                <div className="flex-1">
-                  <h3 className="font-medium">{item.product.name}</h3>
-                  <p className="text-sm text-gray-600">
-                    Qty: {item.quantity}
-                    {item.size && ` • Size: ${item.size}`}
-                    {item.color && ` • Color: ${item.color}`}
-                  </p>
-                  <p className="font-medium">
-                    ${(Number(item.price) * item.quantity).toFixed(2)}
-                  </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Order Info */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Order Summary Card */}
+            <Card className="border-l-4 border-l-green-500">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-sm">Order Date</span>
+                  </div>
+                  <span className="font-medium text-sm">
+                    {new Date(order.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <ShoppingBag className="w-4 h-4" />
+                    <span className="text-sm">Items</span>
+                  </div>
+                  <span className="font-medium text-sm">{order.items.length}</span>
+                </div>
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <DollarSign className="w-4 h-4" />
+                      <span className="text-sm">Total</span>
+                    </div>
+                    <span className="font-bold text-xl text-purple-600">
+                      ${Number(order.total).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Shipping Address Card */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MapPin className="w-5 h-5" />
+                  Shipping Address
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-700 text-sm leading-relaxed">{order.shippingAddress}</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Order Items */}
+          <div className="lg:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <Package className="w-6 h-6" />
+                  Order Items ({order.items.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {order.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                    >
+                      {item.product.images[0] && (
+                        <img
+                          src={item.product.images[0]}
+                          alt={item.product.name}
+                          className="w-24 h-24 object-cover rounded-lg shadow-sm"
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-gray-900 truncate">{item.product.name}</h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {item.size && <span>Size: {item.size}</span>}
+                          {item.size && item.color && <span className="mx-2">•</span>}
+                          {item.color && <span>Color: {item.color}</span>}
+                        </p>
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">Qty:</span>
+                            <span className="font-medium">{item.quantity}</span>
+                          </div>
+                          <span className="font-bold text-lg text-purple-600">
+                            ${(Number(item.price) * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Order Total */}
+                  <div className="border-t-2 border-gray-200 pt-4 mt-6">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-semibold text-gray-700">Order Total</span>
+                      <span className="text-2xl font-bold text-purple-600">
+                        ${Number(order.total).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4">
+        <div className="flex gap-4 mt-8">
           <Link to="/orders" className="flex-1">
             <Button
               variant="outline"
-              className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
+              className="w-full border-purple-600 text-purple-600 hover:bg-purple-50 h-12 text-base"
             >
               View Order History
             </Button>
           </Link>
           <Link to="/products" className="flex-1">
-            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
+            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white h-12 text-base">
               Continue Shopping
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>

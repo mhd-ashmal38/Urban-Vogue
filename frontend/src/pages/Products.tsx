@@ -127,7 +127,10 @@ export default function Products() {
                 <Select
                   value={selectedCategory}
                   onChange={(value) => handleCategoryChange(value)}
-                  options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+                  options={[
+                    { value: '', label: 'All' },
+                    ...categories.map((cat) => ({ value: cat.id, label: cat.name }))
+                  ]}
                   placeholder="All Categories"
                   className="w-full"
                 />
