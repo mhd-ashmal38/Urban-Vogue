@@ -26,13 +26,28 @@ export class ProductsService {
   /**
    * Create a new product
    * @param createProductDto - Product data
-   * @returns The created product with category
+   * @returns The created product with category and variants
    */
   async create(createProductDto: CreateProductDto) {
+    const { variants, ...productData } = createProductDto;
+
     const product = await this.prisma.product.create({
-      data: createProductDto,
+      data: {
+        ...productData,
+        variants: variants
+          ? {
+              create: variants.map((variant) => ({
+                color: variant.color,
+                images: variant.images,
+                sizeStock: variant.sizeStock,
+                price: variant.price,
+              })),
+            }
+          : undefined,
+      },
       include: {
-        category: true, // Include category in response
+        category: true,
+        variants: true,
       },
     });
 
@@ -42,15 +57,16 @@ export class ProductsService {
   /**
    * Find all products
    * @param categoryId - Optional filter by category ID
-   * @returns Array of all products with categories
+   * @returns Array of all products with categories and variants
    */
   async findAll(categoryId?: string) {
     const products = await this.prisma.product.findMany({
       where: categoryId ? { categoryId } : undefined,
       include: {
-        category: true, // Include category in response
+        category: true,
+        variants: true,
       },
-      orderBy: { createdAt: 'desc' }, // Sort by newest first
+      orderBy: { createdAt: 'desc' },
     });
 
     return products;
@@ -59,14 +75,15 @@ export class ProductsService {
   /**
    * Find a single product by ID
    * @param id - Product's UUID
-   * @returns The product with category
+   * @returns The product with category and variants
    * @throws NotFoundException if product doesn't exist
    */
   async findOne(id: string) {
     const product = await this.prisma.product.findUnique({
       where: { id },
       include: {
-        category: true, // Include category in response
+        category: true,
+        variants: true,
       },
     });
 
@@ -80,15 +97,16 @@ export class ProductsService {
   /**
    * Find products by category ID
    * @param categoryId - Category's UUID
-   * @returns Array of products in the category
+   * @returns Array of products in the category with variants
    */
   async findByCategory(categoryId: string) {
     const products = await this.prisma.product.findMany({
       where: { categoryId },
       include: {
         category: true,
+        variants: true,
       },
-      orderBy: { name: 'asc' }, // Sort alphabetically by name
+      orderBy: { name: 'asc' },
     });
 
     return products;
@@ -97,18 +115,19 @@ export class ProductsService {
   /**
    * Search products by name
    * @param query - Search query string
-   * @returns Array of matching products
+   * @returns Array of matching products with variants
    */
   async search(query: string) {
     const products = await this.prisma.product.findMany({
       where: {
         name: {
           contains: query,
-          mode: 'insensitive', // Case-insensitive search
+          mode: 'insensitive',
         },
       },
       include: {
         category: true,
+        variants: true,
       },
     });
 
@@ -119,18 +138,34 @@ export class ProductsService {
    * Update a product
    * @param id - Product's UUID
    * @param updateProductDto - Fields to update
-   * @returns The updated product with category
+   * @returns The updated product with category and variants
    * @throws NotFoundException if product doesn't exist
    */
   async update(id: string, updateProductDto: UpdateProductDto) {
+    const { variants, ...productData } = updateProductDto;
+
     // Check if product exists first
     await this.findOne(id);
 
     const product = await this.prisma.product.update({
       where: { id },
-      data: updateProductDto,
+      data: {
+        ...productData,
+        variants: variants
+          ? {
+              deleteMany: {}, // Delete existing variants
+              create: variants.map((variant) => ({
+                color: variant.color,
+                images: variant.images,
+                sizeStock: variant.sizeStock,
+                price: variant.price,
+              })),
+            }
+          : undefined,
+      },
       include: {
         category: true,
+        variants: true,
       },
     });
 

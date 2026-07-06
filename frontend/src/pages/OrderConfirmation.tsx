@@ -139,9 +139,9 @@ export default function OrderConfirmation() {
                       key={item.id}
                       className="flex gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
                     >
-                      {item.product.images[0] && (
+                      {item.image && (
                         <img
-                          src={item.product.images[0]}
+                          src={item.image}
                           alt={item.product.name}
                           className="w-24 h-24 object-cover rounded-lg shadow-sm"
                         />

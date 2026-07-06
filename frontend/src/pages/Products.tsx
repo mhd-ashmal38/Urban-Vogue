@@ -177,9 +177,9 @@ export default function Products() {
                   >
                     {/* Product Image */}
                     <div className="aspect-square bg-gray-200">
-                      {product.images && product.images.length > 0 ? (
+                      {product.variants && product.variants.length > 0 && product.variants[0].images.length > 0 ? (
                         <img
-                          src={product.images[0]}
+                          src={product.variants[0].images[0]}
                           alt={product.name}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -208,7 +208,9 @@ export default function Products() {
                           ${Number(product.price).toFixed(2)}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                          {product.variants && product.variants.length > 0
+                            ? `${product.variants.length} color${product.variants.length > 1 ? 's' : ''}`
+                            : 'No variants'}
                         </span>
                       </div>
                       <p className="text-xs text-gray-400 mt-2">

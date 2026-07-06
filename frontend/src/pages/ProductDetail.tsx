@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ShoppingCart } from 'lucide-react'
 import { productsApi } from '../services/products'
-import type { Product } from '../services/products'
+import type { Product, ProductVariant } from '../services/products'
 import { Button } from '../components/ui/button'
 import { toast } from 'sonner'
 import { useCartStore } from '../store/cartStore'
+
+const STANDARD_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>()
@@ -16,8 +18,8 @@ export default function ProductDetail() {
   const [error, setError] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
-  const [selectedColor, setSelectedColor] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -29,6 +31,17 @@ export default function ProductDetail() {
       try {
         const data = await productsApi.getById(id)
         setProduct(data)
+        // Select first variant by default
+        if (data.variants && data.variants.length > 0) {
+          setSelectedVariant(data.variants[0])
+          // Select first available size
+          const firstAvailableSize = STANDARD_SIZES.find(
+            size => data.variants[0].sizeStock[size] && data.variants[0].sizeStock[size] > 0
+          )
+          if (firstAvailableSize) {
+            setSelectedSize(firstAvailableSize)
+          }
+        }
       } catch (err) {
         setError('Failed to load product')
         console.error(err)
@@ -41,55 +54,90 @@ export default function ProductDetail() {
   }, [id])
 
   const handleAddToCart = async () => {
-    if (!product) return
+    if (!product || !selectedVariant || !selectedSize) return
 
-    // Check if variant selection is required
-    const hasVariants = (product.sizes && product.sizes.length > 0) || (product.colors && product.colors.length > 0)
+    const variantPrice = selectedVariant.price ? Number(selectedVariant.price) : Number(product.price)
+    const stock = selectedVariant.sizeStock[selectedSize] || 0
 
-    if (hasVariants) {
-      if (product.sizes && product.sizes.length > 0 && !selectedSize) {
-        toast.error('Please select a size')
-        return
-      }
-      if (product.colors && product.colors.length > 0 && !selectedColor) {
-        toast.error('Please select a color')
-        return
-      }
+    if (stock === 0) {
+      toast.error('This size is out of stock')
+      return
+    }
+
+    if (quantity > stock) {
+      toast.error(`Only ${stock} items available in stock`)
+      return
     }
 
     const cartItem = {
       productId: product.id,
       name: product.name,
-      price: product.price,
+      price: variantPrice,
       quantity,
       size: selectedSize,
-      color: selectedColor,
-      image: product.images?.[0],
+      color: selectedVariant.color,
+      image: selectedVariant.images[0],
     }
 
     await addItem(cartItem)
-    toast.success(`Added ${quantity} ${product.name}(s) to cart${selectedSize ? ` (${selectedSize})` : ''}${selectedColor ? ` (${selectedColor})` : ''}`)
+    toast.success(`Added ${quantity} ${product.name}(s) to cart (${selectedVariant.color}, ${selectedSize})`)
   }
 
   const handleQuantityChange = (delta: number) => {
+    if (!selectedVariant || !selectedSize) return
+    const stock = selectedVariant.sizeStock[selectedSize] || 0
     const newQuantity = quantity + delta
-    if (newQuantity >= 1 && product && newQuantity <= product.stock) {
+    if (newQuantity >= 1 && newQuantity <= stock) {
       setQuantity(newQuantity)
     }
   }
 
   const nextImage = () => {
-    if (product && product.images && product.images.length > 0) {
-      setCurrentImageIndex((prev) => (prev + 1) % product.images.length)
+    if (selectedVariant && selectedVariant.images.length > 0) {
+      setCurrentImageIndex((prev) => (prev + 1) % selectedVariant.images.length)
     }
   }
 
   const prevImage = () => {
-    if (product && product.images && product.images.length > 0) {
+    if (selectedVariant && selectedVariant.images.length > 0) {
       setCurrentImageIndex(
-        (prev) => (prev - 1 + product.images.length) % product.images.length
+        (prev) => (prev - 1 + selectedVariant.images.length) % selectedVariant.images.length
       )
     }
+  }
+
+  const handleVariantChange = (variant: ProductVariant) => {
+    setSelectedVariant(variant)
+    setCurrentImageIndex(0)
+    // Select first available size for new variant
+    const firstAvailableSize = STANDARD_SIZES.find(
+      size => variant.sizeStock[size] && variant.sizeStock[size] > 0
+    )
+    setSelectedSize(firstAvailableSize || null)
+    setQuantity(1)
+  }
+
+  const handleSizeChange = (size: string) => {
+    setSelectedSize(size)
+    setQuantity(1)
+  }
+
+  const getVariantStock = () => {
+    if (!selectedVariant) return 0
+    return Object.values(selectedVariant.sizeStock || {}).reduce((sum, stock) => sum + (stock || 0), 0)
+  }
+
+  const getSelectedSizeStock = () => {
+    if (!selectedVariant || !selectedSize) return 0
+    return selectedVariant.sizeStock[selectedSize] || 0
+  }
+
+  const getDisplayPrice = () => {
+    if (!product) return 0
+    if (selectedVariant && selectedVariant.price) {
+      return Number(selectedVariant.price)
+    }
+    return Number(product.price)
   }
 
   if (loading) {
@@ -117,8 +165,8 @@ export default function ProductDetail() {
   }
 
   const currentImage =
-    product.images && product.images.length > 0
-      ? product.images[currentImageIndex]
+    selectedVariant && selectedVariant.images.length > 0
+      ? selectedVariant.images[currentImageIndex]
       : null
 
   return (
@@ -160,7 +208,7 @@ export default function ProductDetail() {
                 )}
 
                 {/* Image Navigation */}
-                {product.images && product.images.length > 1 && (
+                {selectedVariant && selectedVariant.images.length > 1 && (
                   <>
                     <button
                       onClick={prevImage}
@@ -179,13 +227,13 @@ export default function ProductDetail() {
               </div>
 
               {/* Thumbnail Gallery */}
-              {product.images && product.images.length > 1 && (
+              {selectedVariant && selectedVariant.images.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto">
-                  {product.images.map((image, index) => (
+                  {selectedVariant.images.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                      className={`shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
                         index === currentImageIndex
                           ? 'border-purple-600'
                           : 'border-gray-300'
@@ -212,7 +260,7 @@ export default function ProductDetail() {
                   {product.name}
                 </h1>
                 <p className="text-2xl font-bold text-purple-600">
-                  ${Number(product.price).toFixed(2)}
+                  ${getDisplayPrice().toFixed(2)}
                 </p>
               </div>
 
@@ -222,46 +270,53 @@ export default function ProductDetail() {
                 </p>
               </div>
 
-              {/* Sizes */}
-              {product.sizes && product.sizes.length > 0 && (
+              {/* Color Variants */}
+              {product.variants && product.variants.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Size:</p>
+                  <p className="text-sm font-medium text-gray-700">Color:</p>
                   <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((size) => (
+                    {product.variants.map((variant) => (
                       <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
+                        key={variant.id}
+                        onClick={() => handleVariantChange(variant)}
                         className={`px-4 py-2 border-2 rounded-lg text-sm font-medium transition-colors ${
-                          selectedSize === size
-                            ? 'border-purple-600 bg-purple-50 text-purple-700'
-                            : 'border-gray-300 text-gray-700 hover:border-purple-400'
+                          selectedVariant?.id === variant.id
+                            ? 'border-blue-600 bg-blue-50 text-blue-700'
+                            : 'border-gray-300 text-gray-700 hover:border-blue-400'
                         }`}
                       >
-                        {size}
+                        {variant.color}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Colors */}
-              {product.colors && product.colors.length > 0 && (
+              {/* Sizes */}
+              {selectedVariant && (
                 <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700">Color:</p>
+                  <p className="text-sm font-medium text-gray-700">Size:</p>
                   <div className="flex flex-wrap gap-2">
-                    {product.colors.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`px-4 py-2 border-2 rounded-lg text-sm font-medium transition-colors ${
-                          selectedColor === color
-                            ? 'border-blue-600 bg-blue-50 text-blue-700'
-                            : 'border-gray-300 text-gray-700 hover:border-blue-400'
-                        }`}
-                      >
-                        {color}
-                      </button>
-                    ))}
+                    {STANDARD_SIZES.map((size) => {
+                      const stock = selectedVariant.sizeStock[size] || 0
+                      const isOutOfStock = stock === 0
+                      return (
+                        <button
+                          key={size}
+                          onClick={() => !isOutOfStock && handleSizeChange(size)}
+                          disabled={isOutOfStock}
+                          className={`px-4 py-2 border-2 rounded-lg text-sm font-medium transition-colors ${
+                            selectedSize === size
+                              ? 'border-purple-600 bg-purple-50 text-purple-700'
+                              : isOutOfStock
+                              ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                              : 'border-gray-300 text-gray-700 hover:border-purple-400'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -282,7 +337,7 @@ export default function ProductDetail() {
                     </span>
                     <button
                       onClick={() => handleQuantityChange(1)}
-                      disabled={quantity >= product.stock}
+                      disabled={!selectedSize || quantity >= getSelectedSizeStock()}
                       className="px-4 py-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       +
@@ -292,22 +347,26 @@ export default function ProductDetail() {
 
                 <p
                   className={`text-sm ${
-                    product.stock > 0 ? 'text-green-600' : 'text-red-600'
+                    getSelectedSizeStock() > 0 ? 'text-green-600' : 'text-red-600'
                   }`}
                 >
-                  {product.stock > 0
-                    ? `${product.stock} items in stock`
+                  {selectedSize
+                    ? getSelectedSizeStock() > 0
+                      ? `${getSelectedSizeStock()} items in stock for ${selectedSize}`
+                      : `${selectedSize} is out of stock`
+                    : getVariantStock() > 0
+                    ? `${getVariantStock()} items in stock across all sizes`
                     : 'Out of stock'}
                 </p>
               </div>
 
               <Button
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
+                disabled={!selectedVariant || !selectedSize || getSelectedSizeStock() === 0}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ShoppingCart className="w-5 h-5" />
-                {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                {selectedVariant && selectedSize && getSelectedSizeStock() > 0 ? 'Add to Cart' : 'Select Size'}
               </Button>
 
               <div className="text-sm text-gray-500 space-y-1">

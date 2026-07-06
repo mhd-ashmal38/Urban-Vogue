@@ -1,6 +1,7 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateProductDto } from './create-product.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { CreateVariantDto } from './create-variant.dto';
 
 /**
  * UpdateProductDto - Defines the structure for updating a product
@@ -10,8 +11,8 @@ import { ApiProperty } from '@nestjs/swagger';
  * - Allows updating only specific fields without sending all data
  *
  * Example usage:
- * - PATCH /products/123 with { price: 899.99 } - updates only price
- * - PATCH /products/123 with { stock: 100 } - updates only stock
+ * - PATCH /products/123 with { price: 39.99 } - updates only price
+ * - PATCH /products/123 with { variants: [...] } - updates variants
  *
  * Why use PartialType?
  * - Prevents sending all fields when updating just one
@@ -19,20 +20,17 @@ import { ApiProperty } from '@nestjs/swagger';
  * - Reduces payload size for updates
  */
 export class UpdateProductDto extends PartialType(CreateProductDto) {
-  @ApiProperty({ example: 'iPhone 15 Pro', required: false })
+  @ApiProperty({ example: 'Summer Floral Dress', required: false })
   name?: string;
 
   @ApiProperty({
-    example: 'Latest iPhone with A17 Pro chip',
+    example: 'Beautiful summer dress with floral pattern',
     required: false,
   })
   description?: string;
 
-  @ApiProperty({ example: 999.99, required: false })
+  @ApiProperty({ example: 49.99, required: false })
   price?: number;
-
-  @ApiProperty({ example: 50, required: false })
-  stock?: number;
 
   @ApiProperty({
     example: 'uuid-of-category',
@@ -41,26 +39,9 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {
   categoryId?: string;
 
   @ApiProperty({
-    example: [
-      'https://example.com/image1.jpg',
-      'https://example.com/image2.jpg',
-    ],
+    description: 'Array of color variants with images and size stock',
     required: false,
-    type: [String],
+    type: [CreateVariantDto],
   })
-  images?: string[];
-
-  @ApiProperty({
-    example: ['S', 'M', 'L', 'XL'],
-    required: false,
-    type: [String],
-  })
-  sizes?: string[];
-
-  @ApiProperty({
-    example: ['Red', 'Blue', 'Black'],
-    required: false,
-    type: [String],
-  })
-  colors?: string[];
+  variants?: CreateVariantDto[];
 }

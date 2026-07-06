@@ -7,11 +7,16 @@ export interface OrderItem {
   price: number
   size?: string | null
   color?: string | null
+  image?: string | null
   product: {
     id: string
     name: string
     price: number
-    images: string[]
+    variants?: Array<{
+      id: string
+      color: string
+      images: string[]
+    }>
   }
 }
 
