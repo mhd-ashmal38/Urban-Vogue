@@ -4,6 +4,7 @@ import { Package, Calendar, DollarSign, ArrowRight } from 'lucide-react'
 import { orderApi, type Order } from '../services/orders'
 import { Button } from '../components/ui/button'
 import { Card, CardContent } from '../components/ui/card'
+import EmptyState from '../components/ui/empty-state'
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -47,16 +48,18 @@ export default function Orders() {
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center">
-            <Package className="w-24 h-24 mx-auto text-gray-300 mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">No orders yet</h1>
-            <p className="text-gray-600 mb-8">Start shopping to see your orders here</p>
-            <Link to="/products">
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-                Browse Products
-              </Button>
-            </Link>
-          </div>
+          <EmptyState 
+            type="orders" 
+            title="No orders yet"
+            description="Start shopping to see your orders here"
+            action={
+              <Link to="/products">
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                  Browse Products
+                </Button>
+              </Link>
+            }
+          />
         </div>
       </div>
     )

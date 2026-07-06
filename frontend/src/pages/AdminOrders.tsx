@@ -4,6 +4,7 @@ import { orderApi, type Order, type OrderItem } from '../services/orders'
 import { Table, type Column, type Action } from '../components/ui/table'
 import AdminLayout from '../components/AdminLayout'
 import SkeletonTable from '../components/ui/skeleton-table'
+import EmptyState from '../components/ui/empty-state'
 
 const statusColors: Record<string, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
@@ -179,13 +180,7 @@ export default function AdminOrders() {
   if (orders.length === 0) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center">
-          <div className="text-center">
-            <Package className="w-24 h-24 mx-auto text-gray-300 mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">No orders yet</h1>
-            <p className="text-gray-600">Orders will appear here when customers make purchases</p>
-          </div>
-        </div>
+        <EmptyState type="orders" />
       </AdminLayout>
     )
   }

@@ -9,6 +9,7 @@ import { Dialog } from '../components/ui/dialog'
 import { Table, type Column, type Action } from '../components/ui/table'
 import AdminLayout from '../components/AdminLayout'
 import SkeletonTable from '../components/ui/skeleton-table'
+import EmptyState from '../components/ui/empty-state'
 
 export default function AdminCategoryManagement() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -250,70 +251,130 @@ export default function AdminCategoryManagement() {
     )
   }
 
+  const content = categories.length === 0 ? (
+    <EmptyState
+      type="categories"
+      action={
+        <Button
+          onClick={openCreateModal}
+          className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+        >
+          <Plus className="w-5 h-5" />
+          Add Category
+        </Button>
+      }
+    />
+  ) : (
+    <>
+      <div>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Category Management</h1>
+            <p className="text-gray-600 mt-1">Manage your product categories</p>
+          </div>
+          <div className="flex gap-3">
+            <Button
+              onClick={handleExportCSV}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              Export CSV
+            </Button>
+            {selectedCategories.length > 0 && (
+              <Button
+                onClick={handleBulkDelete}
+                className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+              >
+                <Trash2 className="w-5 h-5" />
+                Delete Selected ({selectedCategories.length})
+              </Button>
+            )}
+            <Button
+              onClick={openCreateModal}
+              className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Add Category
+            </Button>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="mb-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input
+              type="text"
+              placeholder="Search categories by name or description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Categories Table */}
+        <Table
+          columns={columns}
+          data={filteredCategories}
+          actions={actions}
+          emptyMessage="No categories found. Click 'Add Category' to create one."
+          height="calc(100vh - 300px)"
+          pageSize={10}
+          selectable={true}
+          onSelectionChange={setSelectedCategories}
+        />
+      </div>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        isOpen={bulkDeleteDialogOpen}
+        onClose={closeBulkDeleteDialog}
+        title="Delete Multiple Categories"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              onClick={closeBulkDeleteDialog}
+              variant="outline"
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmBulkDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to delete <strong>{selectedCategories.length} categories</strong>? This action cannot be undone and will also delete all products in these categories.
+          </p>
+          {selectedCategories.length > 0 && (
+            <div className="max-h-40 overflow-y-auto">
+              <ul className="list-disc list-inside text-sm text-gray-600">
+                {selectedCategories.map((category) => (
+                  <li key={category.id}>{category.name}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </Dialog>
+    </>
+  )
+
   return (
     <AdminLayout>
-      <>
-        <div>
-          {/* Header */}
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Category Management</h1>
-              <p className="text-gray-600 mt-1">Manage your product categories</p>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={handleExportCSV}
-                variant="outline"
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-              >
-                <Download className="w-5 h-5" />
-                Export CSV
-              </Button>
-              {selectedCategories.length > 0 && (
-                <Button
-                  onClick={handleBulkDelete}
-                  className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
-                >
-                  <Trash2 className="w-5 h-5" />
-                  Delete Selected ({selectedCategories.length})
-                </Button>
-              )}
-              <Button
-                onClick={openCreateModal}
-                className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                Add Category
-              </Button>
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                type="text"
-                placeholder="Search categories by name or description..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Categories Table */}
-          <Table
-            columns={columns}
-            data={filteredCategories}
-            actions={actions}
-            emptyMessage="No categories found. Click 'Add Category' to create one."
-            height="calc(100vh - 300px)"
-            pageSize={10}
-            selectable={true}
-            onSelectionChange={setSelectedCategories}
-          />
-        </div>
+      {content}
 
       {/* Create/Edit Modal */}
       <Dialog
@@ -405,49 +466,6 @@ export default function AdminCategoryManagement() {
           </p>
         </div>
       </Dialog>
-
-      {/* Bulk Delete Confirmation Dialog */}
-      <Dialog
-        isOpen={bulkDeleteDialogOpen}
-        onClose={closeBulkDeleteDialog}
-        title="Delete Multiple Categories"
-        size="sm"
-        footer={
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              onClick={closeBulkDeleteDialog}
-              variant="outline"
-              className="border-gray-300"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={confirmBulkDelete}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              Delete
-            </Button>
-          </div>
-        }
-      >
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            Are you sure you want to delete <strong>{selectedCategories.length} categories</strong>? This action cannot be undone and will also delete all products in these categories.
-          </p>
-          {selectedCategories.length > 0 && (
-            <div className="max-h-40 overflow-y-auto">
-              <ul className="list-disc list-inside text-sm text-gray-600">
-                {selectedCategories.map((category) => (
-                  <li key={category.id}>{category.name}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </Dialog>
-      </>
     </AdminLayout>
   )
 }
