@@ -23,6 +23,23 @@ async function main() {
 
   console.log('Admin user created/updated:', admin.email);
 
+  // Create test user
+  const testUserPassword = await bcrypt.hash('Test123!', 10);
+
+  const testUser = await prisma.user.upsert({
+    where: { email: 'test@urbanvogue.com' },
+    update: {},
+    create: {
+      email: 'test@urbanvogue.com',
+      password: testUserPassword,
+      name: 'Test User',
+      role: 'USER',
+      isActive: true,
+    },
+  });
+
+  console.log('Test user created/updated:', testUser.email);
+
   console.log('Seed completed!');
 }
 

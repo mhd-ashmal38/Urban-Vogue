@@ -5,6 +5,7 @@ import { Search, Filter, ShoppingCart, Package } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Select } from '../components/ui/select'
 import { useCartStore } from '../store/cartStore'
+import EmptyState from '../components/ui/empty-state'
 
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
@@ -157,14 +158,10 @@ export default function Products() {
 
             {/* Products Grid */}
             {!loading && !error && products.length === 0 && (
-              <div className="flex items-center justify-center" style={{ minHeight: '400px' }}>
-                <div className="text-center">
-                  <p className="text-gray-600 text-lg">No products found</p>
-                  {searchQuery && (
-                    <p className="text-gray-500 mt-2">Try a different search term</p>
-                  )}
-                </div>
-              </div>
+              <EmptyState 
+                type={searchQuery ? 'search' : 'products'}
+                description={searchQuery ? 'Try a different search term' : undefined}
+              />
             )}
 
             {!loading && !error && products.length > 0 && (

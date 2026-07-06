@@ -1,14 +1,14 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Package, ShoppingBag, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, ShoppingBag, FolderOpen, Package, LogOut } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { Button } from './ui/button'
 
 const navItems = [
   { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/admin/users', label: 'Users', icon: Users },
-  { path: '/admin/products', label: 'Products', icon: Package },
-  { path: '/admin/categories', label: 'Categories', icon: ShoppingBag },
-  { path: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { path: '/admin/products', label: 'Products', icon: ShoppingBag },
+  { path: '/admin/categories', label: 'Categories', icon: FolderOpen },
+  { path: '/admin/orders', label: 'Orders', icon: Package },
 ]
 
 export default function AdminSidebar() {
