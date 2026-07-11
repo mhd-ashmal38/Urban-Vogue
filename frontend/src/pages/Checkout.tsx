@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { MapPin, ArrowRight, Plus, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -227,7 +227,7 @@ export default function Checkout() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null)
 
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
     try {
       const addresses = await addressApi.getAddresses()
       setSavedAddresses(addresses)
@@ -239,7 +239,7 @@ export default function Checkout() {
     } catch {
       console.error('Failed to fetch addresses')
     }
-  }
+  }, [])
 
   const handleRequestDeleteAddress = (e: React.MouseEvent, addr: Address) => {
     e.stopPropagation()
@@ -288,11 +288,18 @@ export default function Checkout() {
 
   // Fetch cart and addresses when component mounts if user is authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchCart()
-      fetchAddresses()
+    if (!isAuthenticated) return
+    let cancelled = false
+    ;(async () => {
+      await Promise.resolve()
+      if (cancelled) return
+      await fetchCart()
+      await fetchAddresses()
+    })()
+    return () => {
+      cancelled = true
     }
-  }, [isAuthenticated, fetchCart])
+  }, [isAuthenticated, fetchCart, fetchAddresses])
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {}
