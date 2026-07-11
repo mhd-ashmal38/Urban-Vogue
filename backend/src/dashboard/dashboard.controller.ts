@@ -1,10 +1,14 @@
 import { Controller, Get, UseGuards, Request } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { AuthRequest } from '../common/types';
 
 @ApiTags('dashboard')
 @Controller('dashboard')
@@ -20,7 +24,10 @@ export class DashboardController {
   @Roles('ADMIN')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get dashboard statistics' })
-  @ApiResponse({ status: 200, description: 'Statistics retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   getStats() {
@@ -36,7 +43,10 @@ export class DashboardController {
   @Roles('ADMIN')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get revenue data over time' })
-  @ApiResponse({ status: 200, description: 'Revenue data retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Revenue data retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   getRevenue() {
@@ -52,7 +62,10 @@ export class DashboardController {
   @Roles('ADMIN')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get orders data over time' })
-  @ApiResponse({ status: 200, description: 'Orders data retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Orders data retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   getOrders() {
@@ -68,7 +81,10 @@ export class DashboardController {
   @Roles('ADMIN')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get recent orders' })
-  @ApiResponse({ status: 200, description: 'Recent orders retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Recent orders retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   getRecentOrders() {
@@ -84,7 +100,10 @@ export class DashboardController {
   @Roles('ADMIN')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: 'Get top selling products' })
-  @ApiResponse({ status: 200, description: 'Top products retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Top products retrieved successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   getTopProducts() {

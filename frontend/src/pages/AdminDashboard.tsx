@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Users, ShoppingBag, Package, TrendingUp, DollarSign, Loader2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Users, ShoppingBag, Package, TrendingUp, DollarSign, Loader2, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import AdminLayout from '../components/AdminLayout'
 import dashboardApi, { type DashboardStats, type RevenueData, type OrdersData, type RecentOrder, type TopProduct } from '../services/dashboard'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { Button } from '../components/ui/button'
 
 const COLORS = ['#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#3b82f6']
 
@@ -72,6 +74,13 @@ export default function AdminDashboard() {
       CANCELLED: 'bg-red-100 text-red-800',
     }
     return colors[status] || 'bg-gray-100 text-gray-800'
+  }
+
+  const getStockColor = (stock: number) => {
+    if (stock === 0) return 'bg-red-100 text-red-800'
+    if (stock < 10) return 'bg-orange-100 text-orange-800'
+    if (stock < 20) return 'bg-yellow-100 text-yellow-800'
+    return 'bg-green-100 text-green-800'
   }
 
   return (
@@ -212,7 +221,7 @@ export default function AdminDashboard() {
               {recentOrders.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No recent orders</p>
               ) : (
-                recentOrders.map((order) => (
+                recentOrders.slice(0, 5).map((order) => (
                   <div key={order.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className="bg-purple-100 rounded-full p-2">
@@ -233,6 +242,16 @@ export default function AdminDashboard() {
                 ))
               )}
             </div>
+            {recentOrders.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <Link to="/admin/orders">
+                  <Button variant="outline" className="w-full justify-center text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-300">
+                    View All Orders
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Top Products */}
@@ -242,7 +261,7 @@ export default function AdminDashboard() {
               {topProducts.length === 0 ? (
                 <p className="text-gray-500 text-center py-8">No products yet</p>
               ) : (
-                topProducts.map((product, index) => (
+                topProducts.slice(0, 5).map((product, index) => (
                   <div key={product.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center gap-4">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm`} style={{ backgroundColor: COLORS[index % COLORS.length] }}>
@@ -255,11 +274,24 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-gray-900">{product.totalSold} sold</p>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStockColor(product.stock)}`}>
+                        {product.stock} in stock
+                      </span>
                     </div>
                   </div>
                 ))
               )}
             </div>
+            {topProducts.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <Link to="/admin/products">
+                  <Button variant="outline" className="w-full justify-center text-purple-600 border-purple-200 hover:bg-purple-50 hover:border-purple-300">
+                    View All Products
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </div>

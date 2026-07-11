@@ -6,14 +6,15 @@ export class DashboardService {
   constructor(private prisma: PrismaService) {}
 
   async getStats() {
-    const [totalUsers, totalOrders, totalRevenue, totalProducts] = await Promise.all([
-      this.prisma.user.count(),
-      this.prisma.order.count(),
-      this.prisma.order.aggregate({
-        _sum: { total: true },
-      }),
-      this.prisma.product.count(),
-    ]);
+    const [totalUsers, totalOrders, totalRevenue, totalProducts] =
+      await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.order.count(),
+        this.prisma.order.aggregate({
+          _sum: { total: true },
+        }),
+        this.prisma.product.count(),
+      ]);
 
     return {
       totalUsers,
@@ -131,16 +132,36 @@ export class DashboardService {
         id: true,
         name: true,
         price: true,
+        variants: {
+          select: {
+            sizeStock: true,
+          },
+        },
       },
     });
 
     return orderItems
       .map((item) => {
         const product = products.find((p) => p.id === item.productId);
+
+        // Calculate total stock from all variants
+        let totalStock = 0;
+        if (product?.variants) {
+          product.variants.forEach((variant) => {
+            const sizeStock = variant.sizeStock as Record<string, number>;
+            if (sizeStock) {
+              Object.values(sizeStock).forEach((stock) => {
+                totalStock += stock;
+              });
+            }
+          });
+        }
+
         return {
           id: item.productId,
           name: product?.name || 'Unknown',
           price: product?.price || 0,
+          stock: totalStock,
           totalSold: item._sum.quantity || 0,
         };
       })

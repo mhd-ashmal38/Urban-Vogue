@@ -380,11 +380,6 @@ export default function AdminProductManagement() {
     }
   }
 
-  const closeDeleteDialog = () => {
-    setDeleteDialogOpen(false)
-    setProductToDelete(null)
-  }
-
   const handleBulkDelete = () => {
     if (selectedProducts.length === 0) return
     setBulkDeleteDialogOpen(true)
@@ -528,6 +523,37 @@ export default function AdminProductManagement() {
           onSelectionChange={setSelectedProducts}
         />
       </div>
+
+      {/* Delete Dialog */}
+      <Dialog
+        isOpen={deleteDialogOpen}
+        onClose={() => { setDeleteDialogOpen(false); setProductToDelete(null); }}
+        title="Confirm Delete"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              onClick={() => { setDeleteDialogOpen(false); setProductToDelete(null); }}
+              variant="outline"
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <p>
+          Are you sure you want to delete <strong>{productToDelete?.name}</strong>? This action cannot be undone.
+        </p>
+      </Dialog>
 
       {/* Bulk Delete Dialog */}
       <Dialog

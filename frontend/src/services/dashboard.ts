@@ -33,6 +33,7 @@ export interface TopProduct {
   id: string
   name: string
   price: number
+  stock: number
   totalSold: number
 }
 
