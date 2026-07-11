@@ -53,6 +53,14 @@ export default function OrderConfirmation() {
     )
   }
 
+  const subtotal = order.items.reduce(
+    (sum, i) => sum + Number(i.price) * i.quantity,
+    0,
+  )
+  const qualifiesForFreeShipping = subtotal >= 199
+  const shippingCost = qualifiesForFreeShipping ? 0 : 40
+  const displayTotal = subtotal + shippingCost
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
@@ -102,7 +110,7 @@ export default function OrderConfirmation() {
                       <span className="text-sm">Total</span>
                     </div>
                     <span className="font-bold text-xl text-purple-600">
-                      ${Number(order.total).toFixed(2)}
+                      ${displayTotal.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -167,11 +175,21 @@ export default function OrderConfirmation() {
                   ))}
 
                   {/* Order Total */}
-                  <div className="border-t-2 border-gray-200 pt-4 mt-6">
-                    <div className="flex items-center justify-between">
+                  <div className="border-t-2 border-gray-200 pt-4 mt-6 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="font-medium">${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Shipping</span>
+                      <span className={qualifiesForFreeShipping ? 'text-green-600 font-semibold' : 'font-medium'}>
+                        {qualifiesForFreeShipping ? 'Free' : `$${shippingCost.toFixed(2)}`}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
                       <span className="text-lg font-semibold text-gray-700">Order Total</span>
                       <span className="text-2xl font-bold text-purple-600">
-                        ${Number(order.total).toFixed(2)}
+                        ${displayTotal.toFixed(2)}
                       </span>
                     </div>
                   </div>

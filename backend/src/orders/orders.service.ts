@@ -91,11 +91,13 @@ export class OrdersService {
       });
     }
 
-    // Calculate total
-    const total = cart.items.reduce<number>(
+    // Calculate total including shipping (frontend policy: free >= 199 else 40)
+    const itemsTotal = cart.items.reduce<number>(
       (sum: number, item) => sum + Number(item.product.price) * item.quantity,
       0,
     );
+    const shippingCost = itemsTotal >= 199 ? 0 : 40;
+    const total = itemsTotal + shippingCost;
 
     // Use transaction to ensure atomicity
     const order = await this.prisma.$transaction(

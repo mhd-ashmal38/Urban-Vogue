@@ -18,6 +18,10 @@ export default function Cart() {
     }
   }, [isAuthenticated, fetchCart])
 
+  const subtotal = getTotalPrice()
+  const qualifiesForFreeShipping = subtotal >= 199
+  const shippingCost = qualifiesForFreeShipping ? 0 : 40
+
   const handleQuantityChange = async (productId: string, quantity: number, size?: string, color?: string) => {
     if (quantity < 1) {
       await removeItem(productId, size, color)
@@ -132,11 +136,11 @@ export default function Cart() {
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
-                  <span>{getTotalPrice() >= 50 ? 'Free' : '$5.00'}</span>
+                  <span>{qualifiesForFreeShipping ? 'Free' : `$${shippingCost.toFixed(2)}`}</span>
                 </div>
                 <div className="border-t border-gray-200 pt-3 flex justify-between font-bold text-gray-900">
                   <span>Total</span>
-                  <span>${(getTotalPrice() + (getTotalPrice() >= 50 ? 0 : 5)).toFixed(2)}</span>
+                  <span>${(subtotal + shippingCost).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -163,7 +167,7 @@ export default function Cart() {
               </Button>
 
               <div className="mt-4 text-sm text-gray-500 space-y-1">
-                <p>• Free shipping on orders over $50</p>
+                <p>• Free shipping on orders over $199</p>
                 <p>• 30-day return policy</p>
                 <p>• Secure payment</p>
               </div>

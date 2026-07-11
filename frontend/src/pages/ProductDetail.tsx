@@ -370,7 +370,7 @@ export default function ProductDetail() {
               </Button>
 
               <div className="text-sm text-gray-500 space-y-1">
-                <p>• Free shipping on orders over $50</p>
+                <p>• Free shipping on orders over $199</p>
                 <p>• 30-day return policy</p>
                 <p>• Secure payment</p>
               </div>

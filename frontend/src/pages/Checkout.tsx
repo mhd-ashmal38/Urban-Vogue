@@ -227,6 +227,11 @@ export default function Checkout() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null)
 
+  const subtotal = getTotalPrice()
+  const qualifiesForFreeShipping = subtotal >= 199
+  const shippingCost = qualifiesForFreeShipping ? 0 : 40
+  const orderTotal = subtotal + shippingCost
+
   const fetchAddresses = useCallback(async () => {
     try {
       const addresses = await addressApi.getAddresses()
@@ -455,6 +460,8 @@ export default function Checkout() {
       const order = await orderApi.createOrder({
         shippingAddress,
         addressId: addressIdToUse,
+        total: orderTotal,
+        shippingCost,
       })
       toast.success('Order placed successfully!')
       await clearCart()
@@ -791,12 +798,22 @@ export default function Checkout() {
                   </div>
                 ))}
 
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total</span>
-                    <span>${getTotalPrice().toFixed(2)}</span>
+                <div className="border-t pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">${subtotal.toFixed(2)}</span>
                   </div>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Shipping</span>
+                    <span className={qualifiesForFreeShipping ? 'text-green-600 font-semibold' : 'font-medium'}>
+                      {qualifiesForFreeShipping ? 'Free' : `$${shippingCost.toFixed(2)}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                    <span>Total</span>
+                    <span>${orderTotal.toFixed(2)}</span>
+                  </div>
+                  <p className="text-sm text-gray-600">
                     {getTotalItems()} item{getTotalItems() !== 1 ? 's' : ''}
                   </p>
                 </div>

@@ -39,6 +39,10 @@ export interface Order {
 export interface CreateOrderDto {
   shippingAddress: string
   addressId?: string
+  // Optional client-computed amounts included for display/reporting on the client.
+  // The backend currently ignores these fields.
+  total?: number
+  shippingCost?: number
 }
 
 export interface UpdateOrderDto {
