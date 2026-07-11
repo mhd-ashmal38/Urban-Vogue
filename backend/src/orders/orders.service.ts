@@ -80,7 +80,7 @@ export class OrdersService {
 
       if (currentStock < item.quantity) {
         throw new BadRequestException(
-          `Insufficient stock for ${item.product.name} (${item.color}, ${item.size}). Available: ${currentStock}, Requested: ${item.quantity}`
+          `Insufficient stock for ${item.product.name} (${item.color}, ${item.size}). Available: ${currentStock}, Requested: ${item.quantity}`,
         );
       }
 
@@ -287,7 +287,7 @@ export class OrdersService {
       await this.prisma.$transaction(async (tx) => {
         for (const item of order.items) {
           const matchingVariant = item.product.variants?.find(
-            (variant) => variant.color === item.color
+            (variant) => variant.color === item.color,
           );
 
           if (!matchingVariant) {
@@ -307,7 +307,8 @@ export class OrdersService {
           const updatedSizeStock = { ...sizeStock };
           const size = item.size || '';
 
-          updatedSizeStock[size] = (updatedSizeStock[size] || 0) + item.quantity;
+          updatedSizeStock[size] =
+            (updatedSizeStock[size] || 0) + item.quantity;
 
           await tx.productVariant.update({
             where: { id: matchingVariant.id },

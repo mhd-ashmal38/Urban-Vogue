@@ -91,7 +91,7 @@ export class CartService {
       items: cart.items.map((item) => {
         // Find the variant that matches the cart item's color
         const matchingVariant = item.product.variants?.find(
-          variant => variant.color === item.color
+          (variant) => variant.color === item.color,
         );
 
         return {
@@ -102,9 +102,10 @@ export class CartService {
           quantity: item.quantity,
           size: item.size,
           color: item.color,
-          image: matchingVariant && matchingVariant.images.length > 0
-            ? matchingVariant.images[0]
-            : null,
+          image:
+            matchingVariant && matchingVariant.images.length > 0
+              ? matchingVariant.images[0]
+              : null,
         };
       }),
       total: cart.items.reduce<number>(
