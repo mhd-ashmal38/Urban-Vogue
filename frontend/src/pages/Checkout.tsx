@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { MapPin, ArrowRight } from 'lucide-react'
+import { MapPin, ArrowRight, Plus, Edit, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCartStore } from '../store/cartStore'
 import { useAuthStore } from '../store/authStore'
 import { orderApi } from '../services/orders'
+import { addressApi, type Address } from '../services/addresses'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Select } from '../components/ui/select'
+import { Dialog } from '../components/ui/dialog'
 import EmptyState from '../components/ui/empty-state'
 
 const COUNTRIES = [
@@ -206,6 +208,10 @@ export default function Checkout() {
   const navigate = useNavigate()
   const { items, getTotalPrice, getTotalItems, clearCart, fetchCart } = useCartStore()
   const { isAuthenticated } = useAuthStore()
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null)
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false)
+  const [editingAddressId, setEditingAddressId] = useState<string | null>(null)
   const [fullName, setFullName] = useState('')
   const [streetAddress, setStreetAddress] = useState('')
   const [apartment, setApartment] = useState('')
@@ -216,11 +222,75 @@ export default function Checkout() {
   const [phone, setPhone] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [saveAddress, setSaveAddress] = useState(false)
+  const [setAsPrimary, setSetAsPrimary] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [addressToDelete, setAddressToDelete] = useState<Address | null>(null)
 
-  // Fetch cart when component mounts if user is authenticated
+  const fetchAddresses = async () => {
+    try {
+      const addresses = await addressApi.getAddresses()
+      setSavedAddresses(addresses)
+      // Auto-select primary address if exists
+      const primary = addresses.find(a => a.isPrimary)
+      if (primary) {
+        setSelectedAddressId(primary.id)
+      }
+    } catch {
+      console.error('Failed to fetch addresses')
+    }
+  }
+
+  const handleRequestDeleteAddress = (e: React.MouseEvent, addr: Address) => {
+    e.stopPropagation()
+    setAddressToDelete(addr)
+    setDeleteDialogOpen(true)
+  }
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false)
+    setAddressToDelete(null)
+  }
+
+  const confirmDeleteAddress = async () => {
+    if (!addressToDelete) return
+    try {
+      await addressApi.deleteAddress(addressToDelete.id)
+      toast.success('Address deleted successfully')
+      if (selectedAddressId === addressToDelete.id) {
+        setSelectedAddressId(null)
+      }
+      await fetchAddresses()
+    } catch {
+      toast.error('Failed to delete address')
+    } finally {
+      closeDeleteDialog()
+    }
+  }
+
+  const handleEditAddress = (e: React.MouseEvent, address: Address) => {
+    e.stopPropagation()
+    // Populate form with address data
+    setFullName(address.fullName)
+    setStreetAddress(address.streetAddress)
+    setApartment(address.apartment || '')
+    setCity(address.city)
+    setState(address.state)
+    setZipCode(address.zipCode)
+    setCountry(address.country)
+    setPhone(address.phone)
+    setEditingAddressId(address.id)
+    setShowNewAddressForm(true)
+    setSelectedAddressId(null)
+    setSaveAddress(true)
+    setSetAsPrimary(address.isPrimary)
+  }
+
+  // Fetch cart and addresses when component mounts if user is authenticated
   useEffect(() => {
     if (isAuthenticated) {
       fetchCart()
+      fetchAddresses()
     }
   }, [isAuthenticated, fetchCart])
 
@@ -294,27 +364,91 @@ export default function Checkout() {
       return
     }
 
-    if (!validateForm()) {
-      return
+    let shippingAddress: string
+    let addressIdToUse: string | undefined
+
+    if (selectedAddressId) {
+      // Use selected saved address
+      const selectedAddress = savedAddresses.find(a => a.id === selectedAddressId)
+      if (!selectedAddress) {
+        toast.error('Please select a valid address')
+        return
+      }
+      const countryLabel = COUNTRIES.find(c => c.value === selectedAddress.country)?.label || selectedAddress.country
+      const addressParts = [
+        selectedAddress.fullName,
+        selectedAddress.streetAddress,
+        selectedAddress.apartment && `Apt/Suite: ${selectedAddress.apartment}`,
+        `${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}`,
+        countryLabel,
+        `Phone: ${selectedAddress.phone}`
+      ].filter(Boolean)
+      shippingAddress = addressParts.join(', ')
+      addressIdToUse = selectedAddressId
+    } else {
+      // Use new address form
+      if (!validateForm()) {
+        return
+      }
+      const countryLabel = COUNTRIES.find(c => c.value === country)?.label || country
+      const addressParts = [
+        fullName,
+        streetAddress,
+        apartment && `Apt/Suite: ${apartment}`,
+        `${city}, ${state} ${zipCode}`,
+        countryLabel,
+        phone && `Phone: ${phone}`
+      ].filter(Boolean)
+      shippingAddress = addressParts.join(', ')
+
+      // Save address if user opted to
+      if (saveAddress || editingAddressId) {
+        try {
+          let savedAddress: Address
+          if (editingAddressId) {
+            // Update existing address
+            savedAddress = await addressApi.updateAddress(editingAddressId, {
+              fullName,
+              streetAddress,
+              apartment,
+              city,
+              state,
+              zipCode,
+              country,
+              phone,
+              isPrimary: setAsPrimary,
+            })
+            toast.success('Address updated successfully!')
+          } else {
+            // Create new address
+            savedAddress = await addressApi.createAddress({
+              fullName,
+              streetAddress,
+              apartment,
+              city,
+              state,
+              zipCode,
+              country,
+              phone,
+              isPrimary: setAsPrimary,
+            })
+            toast.success('Address saved successfully!')
+          }
+          addressIdToUse = savedAddress.id
+          setEditingAddressId(null)
+        } catch {
+          toast.error('Failed to save address, but order will be placed')
+        }
+      }
     }
-
-    // Combine address fields into a single string
-    const countryLabel = COUNTRIES.find(c => c.value === country)?.label || country
-    const addressParts = [
-      fullName,
-      streetAddress,
-      apartment && `Apt/Suite: ${apartment}`,
-      `${city}, ${state} ${zipCode}`,
-      countryLabel,
-      phone && `Phone: ${phone}`
-    ].filter(Boolean)
-
-    const shippingAddress = addressParts.join(', ')
 
     setIsSubmitting(true)
 
     try {
-      const order = await orderApi.createOrder({ shippingAddress })
+      const order = await orderApi.createOrder({
+        shippingAddress,
+        addressId: addressIdToUse,
+      })
       toast.success('Order placed successfully!')
       await clearCart()
       navigate(`/order-confirmation/${order.id}`)
@@ -362,7 +496,114 @@ export default function Checkout() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                {savedAddresses.length > 0 && !showNewAddressForm && (
+                  <div className="space-y-4 mb-6">
+                    <p className="text-sm font-medium text-gray-700">Select a saved address:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {savedAddresses.map((address) => (
+                        <div
+                          key={address.id}
+                          onClick={() => setSelectedAddressId(address.id)}
+                          className={`relative p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${
+                            selectedAddressId === address.id
+                              ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-white shadow-md'
+                              : 'border-gray-200 hover:border-purple-300 hover:shadow-sm bg-white'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`p-2 rounded-lg ${
+                              selectedAddressId === address.id ? 'bg-purple-100' : 'bg-gray-100'
+                            }`}>
+                              <MapPin className={`w-5 h-5 ${
+                                selectedAddressId === address.id ? 'text-purple-600' : 'text-gray-500'
+                              }`} />
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-semibold text-gray-900 mb-1">{address.fullName}</p>
+                              <p className="text-sm text-gray-600 leading-relaxed">{address.streetAddress}</p>
+                              {address.apartment && <p className="text-sm text-gray-600">{address.apartment}</p>}
+                              <p className="text-sm text-gray-600">
+                                {address.city}, {address.state} {address.zipCode}
+                              </p>
+                              <p className="text-sm text-gray-600">{address.country}</p>
+                              <p className="text-sm text-gray-600 mt-1">{address.phone}</p>
+                            </div>
+                            <div className="flex items-center gap-0">
+                              <button
+                                onClick={(e) => handleEditAddress(e, address)}
+                                className="p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                title="Edit address"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => handleRequestDeleteAddress(e, address)}
+                                className="p-1 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete address"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowNewAddressForm(true)
+                        setSelectedAddressId(null)
+                      }}
+                      className="w-full border-dashed border-2 hover:border-purple-400 hover:text-purple-600"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add New Address
+                    </Button>
+
+                    {selectedAddressId && (
+                      <Button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        {isSubmitting ? 'Placing Order...' : 'Place Order'}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {(showNewAddressForm || savedAddresses.length === 0) && (
+                  <>
+                    {savedAddresses.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          setShowNewAddressForm(false)
+                          setEditingAddressId(null)
+                          const primary = savedAddresses.find(a => a.isPrimary)
+                          setSelectedAddressId(primary?.id || null)
+                          // Reset form
+                          setFullName('')
+                          setStreetAddress('')
+                          setApartment('')
+                          setCity('')
+                          setState('')
+                          setZipCode('')
+                          setCountry('US')
+                          setPhone('')
+                          setSaveAddress(false)
+                          setSetAsPrimary(false)
+                        }}
+                        className="mb-4"
+                      >
+                        ← Back to saved addresses
+                      </Button>
+                    )}
+                    <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
@@ -466,6 +707,35 @@ export default function Checkout() {
                     />
                   </div>
 
+                  <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="saveAddress"
+                        checked={saveAddress}
+                        onChange={(e) => setSaveAddress(e.target.checked)}
+                        className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                      />
+                      <label htmlFor="saveAddress" className="text-sm text-gray-700">
+                        Save this address for future orders
+                      </label>
+                    </div>
+                    {saveAddress && (
+                      <div className="flex items-center gap-2 ml-6">
+                        <input
+                          type="checkbox"
+                          id="setAsPrimary"
+                          checked={setAsPrimary}
+                          onChange={(e) => setSetAsPrimary(e.target.checked)}
+                          className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                        />
+                        <label htmlFor="setAsPrimary" className="text-sm text-gray-700">
+                          Set as primary address
+                        </label>
+                      </div>
+                    )}
+                  </div>
+
                   <Button
                     type="submit"
                     disabled={isSubmitting}
@@ -475,6 +745,8 @@ export default function Checkout() {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </form>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -526,6 +798,38 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        isOpen={deleteDialogOpen}
+        onClose={closeDeleteDialog}
+        title="Delete Address"
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              onClick={closeDeleteDialog}
+              variant="outline"
+              className="border-gray-300"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmDeleteAddress}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-2">
+          <p className="text-gray-700">
+            Are you sure you want to delete this address? This action cannot be undone.
+          </p>
+        </div>
+      </Dialog>
     </div>
   )
 }

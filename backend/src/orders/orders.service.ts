@@ -143,6 +143,7 @@ export class OrdersService {
             userId,
             total,
             shippingAddress: createOrderDto.shippingAddress,
+            addressId: createOrderDto.addressId,
             status: 'PENDING',
             items: {
               create: cart.items.map((item) => {

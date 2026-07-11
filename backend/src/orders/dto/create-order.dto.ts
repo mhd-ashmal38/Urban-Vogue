@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MinLength } from 'class-validator';
+import { IsString, IsNotEmpty, MinLength, IsOptional, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateOrderDto {
@@ -7,4 +7,10 @@ export class CreateOrderDto {
   @IsNotEmpty()
   @MinLength(10)
   shippingAddress: string;
+
+  @ApiProperty({ example: 'uuid-of-address', required: false })
+  @IsString()
+  @IsUUID()
+  @IsOptional()
+  addressId?: string;
 }

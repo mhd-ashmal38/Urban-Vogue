@@ -19,6 +19,7 @@ import Orders from './pages/Orders'
 import OrderDetails from './pages/OrderDetails'
 import AdminOrderDetails from './pages/AdminOrderDetails'
 import AdminOrders from './pages/AdminOrders'
+import Addresses from './pages/Addresses'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
@@ -41,6 +42,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/addresses"
+            element={
+              <ProtectedRoute>
+                <Addresses />
               </ProtectedRoute>
             }
           />

@@ -38,6 +38,7 @@ export interface Order {
 
 export interface CreateOrderDto {
   shippingAddress: string
+  addressId?: string
 }
 
 export interface UpdateOrderDto {

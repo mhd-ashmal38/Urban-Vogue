@@ -11,6 +11,7 @@ import { ProductsModule } from './products/products.module';
 import { CartModule } from './cart/cart.module';
 import { OrdersModule } from './orders/orders.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AddressesModule } from './addresses/addresses.module';
 
 /**
  * AppModule - The root module of the application
@@ -36,6 +37,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     CartModule,
     OrdersModule,
     DashboardModule,
+    AddressesModule,
   ],
   controllers: [AppController],
   providers: [
