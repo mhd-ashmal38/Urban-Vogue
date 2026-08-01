@@ -16,6 +16,11 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // Add cache-busting timestamp to prevent stale 304 responses
+    config.params = {
+      ...config.params,
+      _t: new Date().getTime(),
+    }
     return config
   },
   (error) => {
