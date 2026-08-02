@@ -66,7 +66,7 @@ export default function Login() {
       if (response.user.role === 'ADMIN') {
         navigate('/admin/dashboard')
       } else {
-        navigate('/products')
+        navigate('/home')
       }
     } catch (err: unknown) {
       console.error('Login error:', err)

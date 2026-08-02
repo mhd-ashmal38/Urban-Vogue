@@ -20,12 +20,14 @@ import OrderDetails from './pages/OrderDetails'
 import AdminOrderDetails from './pages/AdminOrderDetails'
 import AdminOrders from './pages/AdminOrders'
 import ProtectedRoute from './components/ProtectedRoute'
+import Navbar from './components/Navbar'
 import './App.css'
 
 function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen w-screen overflow-x-hidden">
+        <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
